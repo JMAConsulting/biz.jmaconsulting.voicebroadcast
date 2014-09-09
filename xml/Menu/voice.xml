@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<menu>
+  <item>
+    <path>civicrm/testvoice</path>
+    <page_callback>CRM_Voice_Page_Greeter</page_callback>
+    <title>Greeter</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/voice</path>
+    <page_callback>CRM_Voice_Page_Voice</page_callback>
+    <title>Voice</title>
+    <access_arguments>access CiviCRM</access_arguments>
+  </item>
+  <item>
+    <path>civicrm/voicebroadcast/send</path>
+    <title>New Voice Broadcast</title>
+    <page_callback>CRM_VoiceBroadcast_Controller_Send</page_callback>
+    <access_arguments>access Civivoicebroadcast;create broadcast;schedule broadcast</access_arguments>
+    <page_type>1</page_type>
+    <weight>610</weight>
+  </item>
+
+</menu>

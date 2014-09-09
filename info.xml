@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<extension key="biz.jmaconsulting.voicebroadcast" type="module">
+  <file>voicebroadcast</file>
+  <name>FIXME</name>
+  <description>FIXME</description>
+  <license>AGPL-3.0</license>
+  <maintainer>
+    <author>Edsel</author>
+    <email>edsel.lopez@jmaconsulting.biz</email>
+  </maintainer>
+  <releaseDate>2014-08-25</releaseDate>
+  <version>1.0</version>
+  <develStage>alpha</develStage>
+  <compatibility>
+    <ver>4.2</ver>
+  </compatibility>
+  <comments>This is a new, undeveloped module</comments>
+  <civix>
+    <namespace>CRM/Voicebroadcast</namespace>
+  </civix>
+</extension>
