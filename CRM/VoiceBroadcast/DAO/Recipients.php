@@ -34,7 +34,7 @@
  */
 require_once 'CRM/Core/DAO.php';
 require_once 'CRM/Utils/Type.php';
-class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
+class CRM_VoiceBroadcast_DAO_Recipients extends CRM_Core_DAO
 {
   /**
    * static instance to hold the table name
@@ -42,7 +42,7 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
    * @var string
    * @static
    */
-  static $_tableName = 'civicrm_mailing_recipients';
+  static $_tableName = 'civicrm_voicebroadcast_recipients';
   /**
    * static instance to hold the field values
    *
@@ -125,7 +125,7 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
    */
   function __construct()
   {
-    $this->__table = 'civicrm_mailing_recipients';
+    $this->__table = 'civicrm_voicebroadcast_recipients';
     parent::__construct();
   }
   /**
@@ -139,7 +139,7 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
   {
     if (!self::$_links) {
       self::$_links = static ::createReferenceColumns(__CLASS__);
-      self::$_links[] = new CRM_Core_Reference_Basic(self::getTableName() , 'mailing_id', 'civicrm_mailing', 'id');
+      self::$_links[] = new CRM_Core_Reference_Basic(self::getTableName() , 'voice_id', 'civicrm_voicebroadcast', 'id');
       self::$_links[] = new CRM_Core_Reference_Basic(self::getTableName() , 'contact_id', 'civicrm_contact', 'id');
       self::$_links[] = new CRM_Core_Reference_Basic(self::getTableName() , 'email_id', 'civicrm_email', 'id');
       self::$_links[] = new CRM_Core_Reference_Basic(self::getTableName() , 'phone_id', 'civicrm_phone', 'id');
@@ -161,11 +161,11 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
           'type' => CRM_Utils_Type::T_INT,
           'required' => true,
         ) ,
-        'mailing_id' => array(
-          'name' => 'mailing_id',
+        'voice_id' => array(
+          'name' => 'voice_id',
           'type' => CRM_Utils_Type::T_INT,
           'required' => true,
-          'FKClassName' => 'CRM_Mailing_DAO_Mailing',
+          'FKClassName' => 'CRM_VoiceBroadcast_DAO_VoiceBroadcast',
         ) ,
         'contact_id' => array(
           'name' => 'contact_id',
@@ -201,7 +201,7 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
     if (!(self::$_fieldKeys)) {
       self::$_fieldKeys = array(
         'id' => 'id',
-        'mailing_id' => 'mailing_id',
+        'voice_id' => 'voice_id',
         'contact_id' => 'contact_id',
         'email_id' => 'email_id',
         'phone_id' => 'phone_id',
@@ -245,7 +245,7 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
       foreach($fields as $name => $field) {
         if (CRM_Utils_Array::value('import', $field)) {
           if ($prefix) {
-            self::$_import['mailing_recipients'] = & $fields[$name];
+            self::$_import['voicebroadcast_recipients'] = & $fields[$name];
           } else {
             self::$_import[$name] = & $fields[$name];
           }
@@ -269,7 +269,7 @@ class CRM_Mailing_DAO_Recipients extends CRM_Core_DAO
       foreach($fields as $name => $field) {
         if (CRM_Utils_Array::value('export', $field)) {
           if ($prefix) {
-            self::$_export['mailing_recipients'] = & $fields[$name];
+            self::$_export['voicebroadcast_recipients'] = & $fields[$name];
           } else {
             self::$_export[$name] = & $fields[$name];
           }

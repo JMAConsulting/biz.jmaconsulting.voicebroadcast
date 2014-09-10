@@ -361,7 +361,7 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
       // delete previous includes/excludes, if mailing already existed
       foreach (array('groups', 'mailings') as $entity) {
         $mg               = new CRM_VoiceBroadcast_DAO_VoiceBroadcastGroup();
-        $mg->mailing_id   = $ids['voice_id'];
+        $mg->voice_id   = $ids['voice_id'];
         $mg->entity_table = ($entity == 'groups') ? $groupTableName : $mailingTableName;
         $mg->find();
         while ($mg->fetch()) {

@@ -32,7 +32,7 @@
  * $Id$
  *
  */
-class CRM_Mailing_BAO_Recipients extends CRM_Mailing_DAO_Recipients {
+class CRM_VoiceBroadcast_BAO_Recipients extends CRM_VoiceBroadcast_DAO_Recipients {
 
   /**
    * class constructor
@@ -49,8 +49,8 @@ class CRM_Mailing_BAO_Recipients extends CRM_Mailing_DAO_Recipients {
   static function mailingSize($mailingID) {
     $sql = "
 SELECT count(*) as count
-FROM   civicrm_mailing_recipients
-WHERE  mailing_id = %1
+FROM   civicrm_voicebroadcast_recipients
+WHERE  voice_id = %1
 ";
     $params = array(1 => array($mailingID, 'Integer'));
     return CRM_Core_DAO::singleValueQuery($sql, $params);
@@ -76,8 +76,8 @@ WHERE  mailing_id = %1
 
     $sql = "
 SELECT contact_id, email_id, phone_id
-FROM   civicrm_mailing_recipients
-WHERE  mailing_id = %1
+FROM   civicrm_voicebroadcast_recipients
+WHERE  voice_id = %1
        $limitString
 ";
     $params = array(1 => array($mailingID, 'Integer'));
