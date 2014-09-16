@@ -201,87 +201,22 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
 
     // this seems so hacky, not sure what we are doing here and why. Need to investigate and fix
     $session->getVars($options,
-      "CRM_Mailing_Controller_Send_{$this->controller->_key}"
+      "CRM_VoiceBroadcast_Controller_Send_{$this->controller->_key}"
     );
-
-    $fromEmailAddress = CRM_Core_OptionGroup::values('from_email_address');
-    if (empty($fromEmailAddress)) {
-      //redirect user to enter from email address.
-      $url = CRM_Utils_System::url('civicrm/admin/options/from_email_address', 'action=add&reset=1');
-      $status = ts("There is no valid from email address present. You can add here <a href='%1'>Add From Email Address.</a>", array(1 => $url));
-      $session->setStatus($status, ts('Notice'));
-    }
-    else {
-      foreach ($fromEmailAddress as $key => $email) {
-        $fromEmailAddress[$key] = htmlspecialchars($fromEmailAddress[$key]);
-      }
-    }
     $this->addEntityRef('contact_id', ts('Contact'), array('create' => TRUE, 'api' => array('extra' => array('email'))), TRUE);
-    $this->add('select', 'from_email_address',
-      ts('From Email Address'), array(
-        '' => '- select -') + $fromEmailAddress, TRUE
+    
+    $this->add('select', 'phone_number',
+      ts('Phone Number'), array(
+        '' => '- select -'), FALSE
     );
 
-    //Added code to add custom field as Reply-To on form when it is enabled from Mailer settings
-    if (isset($config->replyTo) && !empty($config->replyTo) && empty($options['override_verp'])) {
-      $this->add('select', 'reply_to_address', ts('Reply-To'),
-        array('' => '- select -') + $fromEmailAddress
-      );
-    }
-    elseif (!empty($options['override_verp'])) {
-      $trackReplies = TRUE;
-      $this->assign('trackReplies', $trackReplies);
-    }
-
-    $this->add('text', 'subject', ts('Mailing Subject'),
-      CRM_Core_DAO::getAttribute('CRM_Mailing_DAO_Mailing', 'subject'), TRUE
-    );
-
-    $attributes = array('onclick' => "showHideUpload();");
-    $options = array(ts('Upload Content'), ts('Compose On-screen'));
-
-    $this->addRadio('upload_type', ts('I want to'), $options, $attributes, "&nbsp;&nbsp;");
-
-    CRM_Mailing_BAO_Mailing::commonCompose($this);
-
-    $this->addElement('file', 'textFile', ts('Upload TEXT Message'), 'size=30 maxlength=60');
-    $this->addUploadElement('textFile');
+    $this->addElement('file', 'voiceFile', ts('Upload Voice Message'), 'size=30 maxlength=60');
+    $this->addUploadElement('voiceFile');
     $this->setMaxFileSize(1024 * 1024);
-    $this->addRule('textFile', ts('File size should be less than 1 MByte'), 'maxfilesize', 1024 * 1024);
-    $this->addRule('textFile', ts('File must be in UTF-8 encoding'), 'utf8File');
+    $this->addRule('voiceFile', ts('File size should be less than 1 MByte'), 'maxfilesize', 1024 * 1024);
 
-    $this->addElement('file', 'htmlFile', ts('Upload HTML Message'), 'size=30 maxlength=60');
-    $this->addUploadElement('htmlFile');
-    $this->setMaxFileSize(1024 * 1024);
-    $this->addRule('htmlFile',
-      ts('File size should be less than %1 MByte(s)',
-        array(1 => 1)
-      ),
-      'maxfilesize',
-      1024 * 1024
-    );
-    $this->addRule('htmlFile', ts('File must be in UTF-8 encoding'), 'utf8File');
 
-    //fix upload files when context is search. CRM-3711
-    $ssID = $this->get('ssID');
-    if ($this->_searchBasedMailing && $ssID) {
-      $this->set('uploadNames', array('textFile', 'htmlFile'));
-    }
-
-    CRM_Core_BAO_File::buildAttachment($this,
-      'civicrm_mailing',
-      $this->_mailingID
-    );
-
-    $this->add('select', 'header_id', ts('Mailing Header'),
-      array('' => ts('- none -')) + CRM_Mailing_PseudoConstant::component('Header')
-    );
-
-    $this->add('select', 'footer_id', ts('Mailing Footer'),
-      array('' => ts('- none -')) + CRM_Mailing_PseudoConstant::component('Footer')
-    );
-
-    $this->addFormRule(array('CRM_Mailing_Form_Upload', 'formRule'), $this);
+    $this->addFormRule(array('CRM_VoiceBroadcast_Form_Upload', 'formRule'), $this);
 
     $buttons = array(
       array('type' => 'back',
@@ -308,19 +243,10 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
 
   public function postProcess() {
     $params       = $ids = array();
-    $uploadParams = array('header_id', 'footer_id', 'subject', 'from_name', 'from_email');
-    $fileType     = array('textFile', 'htmlFile');
+    $uploadParams = array('contact_id', 'phone_number');
+    $fileType     = array('voiceFile');
 
     $formValues = $this->controller->exportValues($this->_name);
-
-    foreach ($uploadParams as $key) {
-      if (!empty($formValues[$key]) ||
-        in_array($key, array('header_id', 'footer_id'))
-      ) {
-        $params[$key] = $formValues[$key];
-        $this->set($key, $formValues[$key]);
-      }
-    }
 
     if (!$formValues['upload_type']) {
       foreach ($fileType as $key) {
@@ -331,30 +257,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
           $contents = file_get_contents($formValues[$key]['name']);
           $this->set($key, $formValues[$key]['name']);
         }
-        if ($contents) {
-          $params['body_' . substr($key, 0, 4)] = $contents;
-        }
-        else {
-          $params['body_' . substr($key, 0, 4)] = 'NULL';
-        }
       }
-    }
-    else {
-      $text_message = $formValues['text_message'];
-      $params['body_text'] = $text_message;
-      $this->set('textFile', $params['body_text']);
-      $this->set('text_message', $params['body_text']);
-      $html_message = $formValues['html_message'];
-
-      // dojo editor does some html conversion when tokens are
-      // inserted as links. Hence token replacement fails.
-      // this is hack to revert html conversion for { to %7B and
-      // } to %7D by dojo editor
-      $html_message = str_replace('%7B', '{', str_replace('%7D', '}', $html_message));
-
-      $params['body_html'] = $html_message;
-      $this->set('htmlFile', $params['body_html']);
-      $this->set('html_message', $params['body_html']);
     }
 
     $params['name'] = $this->get('name');
@@ -500,6 +403,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
    * @static
    */
   static function formRule($params, $files, $self) {
+    return array();
     if (!empty($_POST['_qf_Import_refresh'])) {
       return TRUE;
     }
