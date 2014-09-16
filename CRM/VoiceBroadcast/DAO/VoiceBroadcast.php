@@ -190,6 +190,30 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
    */
   public $campaign_id;
   /**
+   * Track call disposition?
+   *
+   * @var boolean
+   */
+  public $is_track_call_disposition;
+  /**
+   * Track call duration?
+   *
+   * @var boolean
+   */
+  public $is_track_call_duration;
+  /**
+   * Track call cost?
+   *
+   * @var boolean
+   */
+  public $is_track_call_cost;
+  /**
+   * URL of the voice file.
+   *
+   * @var longtext
+   */
+  public $voice_message_file;
+  /**
    * class constructor
    *
    * @access public
@@ -367,6 +391,35 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
             'labelColumn' => 'title',
           )
         ) ,
+        'is_track_call_disposition' => array(
+          'name' => 'is_track_call_disposition',
+          'type' => CRM_Utils_Type::T_BOOLEAN,
+          'html' => array(
+            'type' => 'CheckBox',
+          ) ,
+        ) ,
+        'is_track_call_duration' => array(
+          'name' => 'is_track_call_duration',
+          'type' => CRM_Utils_Type::T_BOOLEAN,
+          'html' => array(
+            'type' => 'CheckBox',
+          ) ,
+        ) ,
+        'is_track_call_cost' => array(
+          'name' => 'is_track_call_cost',
+          'type' => CRM_Utils_Type::T_BOOLEAN,
+          'html' => array(
+            'type' => 'CheckBox',
+          ) ,
+        ) ,
+        'voice_message_file' => array(
+          'name' => 'voice_message_file',
+          'type' => CRM_Utils_Type::T_LONGTEXT,
+          'title' => ts('Voice Message File') ,
+          'html' => array(
+            'type' => 'Text',
+          ) ,
+        ) ,
       );
     }
     return self::$_fields;
@@ -400,6 +453,10 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
         'is_archived' => 'is_archived',
         'visibility' => 'visibility',
         'campaign_id' => 'campaign_id',
+        'is_track_call_disposition' => 'is_track_call_disposition',
+        'is_track_call_duration' => 'is_track_call_duration',
+        'is_track_call_cost' => 'is_track_call_cost',
+        'voice_message_file' => 'voice_message_file',
       );
     }
     return self::$_fieldKeys;

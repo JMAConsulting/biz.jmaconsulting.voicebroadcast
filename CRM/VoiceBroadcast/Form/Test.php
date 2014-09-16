@@ -45,15 +45,6 @@ class CRM_VoiceBroadcast_Form_Test extends CRM_Core_Form {
    * @access public
    */
   public function preProcess() {
-    //when user come from search context.
-    $ssID = $this->get('ssID');
-    $this->assign('ssid',$ssID);
-    $this->_searchBasedMailing = CRM_Contact_Form_Search::isSearchContext($this->get('context'));
-    if(CRM_Contact_Form_Search::isSearchContext($this->get('context')) && !$ssID){
-      $params = array();
-      $result = CRM_Core_BAO_PrevNextCache::getSelectedContacts();
-      $this->assign("value", $result);
-    }
   }
 
   /**
@@ -113,21 +104,12 @@ class CRM_VoiceBroadcast_Form_Test extends CRM_Core_Form {
 
     $this->addButtons($buttons);
 
-    $mailingID = $this->get('mailing_id');
+    $mailingID = $this->get('voice_id');
     $textFile  = $this->get('textFile');
     $htmlFile  = $this->get('htmlFile');
 
-    $this->addFormRule(array('CRM_Mailing_Form_Test', 'testMail'), $this);
+    $this->addFormRule(array('CRM_VoiceBroadcast_Form_Test', 'testMail'), $this);
     $preview = array();
-    if ($textFile) {
-      $preview['text_link'] = CRM_Utils_System::url('civicrm/mailing/preview', "type=text&qfKey=$qfKey");
-    }
-    if ($htmlFile) {
-      $preview['html_link'] = CRM_Utils_System::url('civicrm/mailing/preview', "type=html&qfKey=$qfKey");
-    }
-
-    $preview['attachment'] = CRM_Core_BAO_File::attachmentInfo('civicrm_mailing', $mailingID);
-    $this->assign('preview', $preview);
     //Token Replacement of Subject in preview mailing
     $options = array();
     $prefix = "CRM_Mailing_Controller_Send_$qfKey";

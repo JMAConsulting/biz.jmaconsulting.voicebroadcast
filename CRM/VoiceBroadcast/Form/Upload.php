@@ -41,19 +41,9 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
   public $_mailingID;
 
   function preProcess() {
-    $this->_mailingID = $this->get('mailing_id');
+    $this->_mailingID = $this->get('voice_id');
     if (CRM_Core_Permission::check('administer CiviCRM')) {
       $this->assign('isAdmin', 1);
-    }
-
-    //when user come from search context.
-    $ssID = $this->get('ssID');
-    $this->assign('ssid',$ssID);
-    $this->_searchBasedMailing = CRM_Contact_Form_Search::isSearchContext($this->get('context'));
-    if(CRM_Contact_Form_Search::isSearchContext($this->get('context')) && !$ssID){
-      $params = array();
-      $result = CRM_Core_BAO_PrevNextCache::getSelectedContacts();
-      $this->assign("value", $result);
     }
   }
   /**
@@ -79,14 +69,11 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $count = $this->get('count');
     $this->assign('count', $count);
 
-    $this->set('skipTextFile', FALSE);
-    $this->set('skipHtmlFile', FALSE);
-
     $defaults = array();
 
     $htmlMessage = NULL;
     if ($mailingID) {
-      $dao = new CRM_Mailing_DAO_Mailing();
+      $dao = new CRM_VoiceBroadcast_DAO_VoiceBroadcast();
       $dao->id = $mailingID;
       $dao->find(TRUE);
       $dao->storeValues($dao, $defaults);
@@ -229,7 +216,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
         $fromEmailAddress[$key] = htmlspecialchars($fromEmailAddress[$key]);
       }
     }
-
+    $this->addEntityRef('contact_id', ts('Contact'), array('create' => TRUE, 'api' => array('extra' => array('email'))), TRUE);
     $this->add('select', 'from_email_address',
       ts('From Email Address'), array(
         '' => '- select -') + $fromEmailAddress, TRUE
@@ -683,7 +670,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
    * @return string
    */
   public function getTitle() {
-    return ts('Mailing Content');
+    return ts('Provide Voice Message');
   }
 }
 
