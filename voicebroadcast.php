@@ -106,3 +106,10 @@ function voicebroadcast_civicrm_caseTypes(&$caseTypes) {
 function voicebroadcast_civicrm_alterSettingsFolders(&$metaDataFolders = NULL) {
   _voicebroadcast_civix_civicrm_alterSettingsFolders($metaDataFolders);
 }
+
+function voicebroadcast_civicrm_searchColumns($objectName, &$headers, &$rows, &$selector) {
+  /* $header = array(); */
+  /* $header = $headers[1]; */
+  /* $headers[1] = $headers[2]; */
+  /* $headers[2] = $header; */
+}

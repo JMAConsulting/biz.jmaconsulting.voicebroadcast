@@ -20,5 +20,21 @@
     <page_type>1</page_type>
     <weight>610</weight>
   </item>
+  <item>
+    <path>civicrm/voicebroadcast/browse/scheduled</path>
+    <title>Find Voice Broadcasts</title>
+    <path_arguments>scheduled=true</path_arguments>
+    <page_callback>CRM_VoiceBroadcast_Page_Browse</page_callback>
+    <page_type>1</page_type>
+    <weight>620</weight>
+  </item>
+  <item>
+    <path>civicrm/voicebroadcast/browse/unscheduled</path>
+    <title>Find Voice Broadcasts</title>
+    <path_arguments>scheduled=false</path_arguments>
+    <page_callback>CRM_VoiceBroadcast_Page_Browse</page_callback>
+    <page_type>1</page_type>
+    <weight>620</weight>
+  </item>
 
 </menu>

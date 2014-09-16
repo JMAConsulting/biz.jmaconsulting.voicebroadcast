@@ -39,7 +39,7 @@
  * object to do the actual dispay. The fields displayd are controlled by
  * the admin
  */
-class CRM_Mailing_Page_Browse extends CRM_Core_Page {
+class CRM_VoiceBroadcast_Page_Browse extends CRM_Core_Page {
 
   /**
    * all the fields that are listings related
@@ -91,32 +91,11 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
   function preProcess() {
     $this->_unscheduled = $this->_archived = $archiveLinks = FALSE;
     $this->_mailingId   = CRM_Utils_Request::retrieve('mid', 'Positive', $this);
-    $this->_sms         = CRM_Utils_Request::retrieve('sms', 'Positive', $this);
-    $this->assign('sms', $this->_sms);
-    // check that the user has permission to access mailing id
-    CRM_Mailing_BAO_Mailing::checkPermission($this->_mailingId);
 
     $this->_action = CRM_Utils_Request::retrieve('action', 'String', $this);
     $this->assign('action', $this->_action);
 
     $showLinks = TRUE;
-    if (CRM_Mailing_Info::workflowEnabled()) {
-      if (CRM_Core_Permission::check('create mailings')) {
-        $archiveLinks = TRUE;
-      }
-      if (!CRM_Core_Permission::check('access CiviMail') &&
-        !CRM_Core_Permission::check('create mailings')
-      ) {
-        $showLinks = FALSE;
-      }
-    }
-    $this->assign('showLinks', $showLinks);
-    if (CRM_Core_Permission::check('access CiviMail')) {
-      $archiveLinks = TRUE;
-    }
-    if ($archiveLinks == TRUE) {
-      $this->assign('archiveLinks', $archiveLinks);
-    }
   }
 
   /**
@@ -132,9 +111,9 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
     $newArgs = $newArgs[0];
     if (isset($_GET['runJobs']) || CRM_Utils_Array::value('2', $newArgs) == 'queue') {
       $config = CRM_Core_Config::singleton();
-      CRM_Mailing_BAO_MailingJob::runJobs_pre($config->mailerJobSize);
-      CRM_Mailing_BAO_MailingJob::runJobs();
-      CRM_Mailing_BAO_MailingJob::runJobs_post();
+      CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::runJobs_pre($config->mailerJobSize);
+      CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::runJobs();
+      CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::runJobs_post();
     }
 
     $this->_sortByCharacter =
@@ -176,12 +155,12 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
 
     if ($this->_action & CRM_Core_Action::DISABLE) {
       if (CRM_Utils_Request::retrieve('confirmed', 'Boolean', $this)) {
-        CRM_Mailing_BAO_MailingJob::cancel($this->_mailingId);
+        CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::cancel($this->_mailingId);
         CRM_Utils_System::redirect($context);
       }
       else {
-        $controller = new CRM_Core_Controller_Simple('CRM_Mailing_Form_Browse',
-          ts('Cancel Mailing'),
+        $controller = new CRM_Core_Controller_Simple('CRM_VoiceBroadcast_Form_Browse',
+          ts('Cancel Voice Broadcast'),
           $this->_action
         );
         $controller->setEmbedded(TRUE);
@@ -191,17 +170,12 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
     elseif ($this->_action & CRM_Core_Action::DELETE) {
       if (CRM_Utils_Request::retrieve('confirmed', 'Boolean', $this)) {
 
-        // check for action permissions.
-        if (!CRM_Core_Permission::checkActionPermission('CiviMail', $this->_action)) {
-          CRM_Core_Error::fatal(ts('You do not have permission to access this page'));
-        }
-
-        CRM_Mailing_BAO_Mailing::del($this->_mailingId);
+        CRM_VoiceBroadcast_BAO_VoiceBroadcast::del($this->_mailingId);
         CRM_Utils_System::redirect($context);
       }
       else {
-        $controller = new CRM_Core_Controller_Simple('CRM_Mailing_Form_Browse',
-          ts('Delete Mailing'),
+        $controller = new CRM_Core_Controller_Simple('CRM_VoiceBroadcast_Form_Browse',
+          ts('Delete Voice Broadcast'),
           $this->_action
         );
         $controller->setEmbedded(TRUE);
@@ -212,12 +186,12 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
       //archive this mailing, CRM-3752.
       if (CRM_Utils_Request::retrieve('confirmed', 'Boolean', $this)) {
         //set is_archived to 1
-        CRM_Core_DAO::setFieldValue('CRM_Mailing_DAO_Mailing', $this->_mailingId, 'is_archived', TRUE);
+        CRM_Core_DAO::setFieldValue('CRM_VoiceBroadcast_DAO_VoiceBroadcast', $this->_mailingId, 'is_archived', TRUE);
         CRM_Utils_System::redirect($context);
       }
       else {
-        $controller = new CRM_Core_Controller_Simple('CRM_Mailing_Form_Browse',
-          ts('Archive Mailing'),
+        $controller = new CRM_Core_Controller_Simple('CRM_VoiceBroadcast_Form_Browse',
+          ts('Archive Voice Broadcast'),
           $this->_action
         );
         $controller->setEmbedded(TRUE);
@@ -225,7 +199,7 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
       }
     }
 
-    $selector = new CRM_Mailing_Selector_Browse();
+    $selector = new CRM_VoiceBroadcast_Selector_Browse();
     $selector->setParent($this);
 
     $controller = new CRM_Core_Selector_Controller(
@@ -301,8 +275,8 @@ class CRM_Mailing_Page_Browse extends CRM_Core_Page {
       return;
     }
 
-    $form = new CRM_Core_Controller_Simple('CRM_Mailing_Form_Search',
-      ts('Search Mailings'),
+    $form = new CRM_Core_Controller_Simple('CRM_VoiceBroadcast_Form_Search',
+      ts('Search Voice Broadcasts'),
       CRM_Core_Action::ADD
     );
     $form->setEmbedded(TRUE);
