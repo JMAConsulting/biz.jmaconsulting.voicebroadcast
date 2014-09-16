@@ -32,7 +32,7 @@
  * $Id$
  *
  */
-class CRM_Mailing_Form_Search extends CRM_Core_Form {
+class CRM_VoiceBroadcast_Form_Search extends CRM_Core_Form {
 
   public function preProcess() {
     parent::preProcess();
@@ -40,10 +40,10 @@ class CRM_Mailing_Form_Search extends CRM_Core_Form {
 
   public function buildQuickForm() {
     $parent = $this->controller->getParent();
-    $nameTextLabel = ($parent->_sms) ? ts('SMS Name') : ts('Mailing Name');
+    $nameTextLabel = ts('Voice Broadcast Name');
 
     $this->add('text', 'mailing_name', $nameTextLabel,
-      CRM_Core_DAO::getAttribute('CRM_Mailing_DAO_Mailing', 'title')
+      CRM_Core_DAO::getAttribute('CRM_VoiceBroadcast_DAO_VoiceBroadcast', 'title')
     );
 
     CRM_Core_Form_Date::buildDateRange($this, 'mailing', 1, '_from', '_to', ts('From'), FALSE);
@@ -61,9 +61,6 @@ class CRM_Mailing_Form_Search extends CRM_Core_Form {
     $this->addElement('checkbox', 'status_unscheduled', NULL, ts('Draft / Unscheduled'));
     $this->addYesNo('is_archived', ts('Mailing is Archived'), TRUE);
 
-    if ($parent->_sms) {
-      $this->addElement('hidden', 'sms', $parent->_sms);
-    }
     $this->add('hidden', 'hidden_find_mailings', 1);
 
     $this->addButtons(array(

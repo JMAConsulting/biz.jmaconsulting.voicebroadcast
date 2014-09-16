@@ -1,9 +1,8 @@
-<?php
-/*
+{*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.5                                                |
+ | CiviCRM version 4.4                                                |
  +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2014                                |
+ | Copyright CiviCRM LLC (c) 2004-2010                                |
  +--------------------------------------------------------------------+
  | This file is a part of CiviCRM.                                    |
  |                                                                    |
@@ -23,66 +22,17 @@
  | GNU Affero General Public License or the licensing of CiviCRM,     |
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
-*/
+*}
+{htxt id="id-mailing_name-title"}
+  {ts}Mailing Name{/ts}
+{/htxt}
+{htxt id="id-mailing_name"}
+{ts}Find mailings by mailing name. You can enter a partial or complete name.{/ts}
+{/htxt}
 
-/**
- *
- * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2014
- * $Id$
- *
- */
-class CRM_VoiceBroadcast_BAO_Recipients extends CRM_VoiceBroadcast_DAO_Recipients {
-
-  /**
-   * class constructor
-   */
-  function __construct() {
-    parent::__construct();
-  }
-
-  /**
-   * @param $mailingID
-   *
-   * @return null|string
-   */
-  static function mailingSize($mailingID) {
-    $sql = "
-SELECT count(*) as count
-FROM   civicrm_voicebroadcast_recipients
-WHERE  voice_id = %1
-";
-    $params = array(1 => array($mailingID, 'Integer'));
-    return CRM_Core_DAO::singleValueQuery($sql, $params);
-  }
-
-  /**
-   * @param $mailingID
-   * @param null $offset
-   * @param null $limit
-   *
-   * @return Object
-   */
-  static function mailingQuery($mailingID,
-    $offset = NULL, $limit = NULL
-  ) {
-    $limitString = NULL;
-    if ($limit && $offset !== NULL) {
-      $offset = CRM_Utils_Type::escape($offset, 'Int');
-      $limit = CRM_Utils_Type::escape($limit, 'Int');
-
-      $limitString = "LIMIT $offset, $limit";
-    }
-
-    $sql = "
-SELECT contact_id, email_id, phone_id
-FROM   civicrm_voicebroadcast_recipients
-WHERE  voice_id = %1
-       $limitString
-";
-    $params = array(1 => array($mailingID, 'Integer'));
-
-    return CRM_Core_DAO::executeQuery($sql, $params);
-  }
-}
-
+{htxt id="id-create_sort_name-title"}
+  {ts}Mailing Sender{/ts}
+{/htxt}
+{htxt id="id-create_sort_name"}
+{ts}Find mailings by the name of the person who created or sent them. You can enter a complete OR partial name (last name, first name format).{/ts}
+{/htxt}

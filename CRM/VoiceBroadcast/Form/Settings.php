@@ -86,7 +86,7 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
     }
 
     if ($mailingID) {
-      $dao = new CRM_Mailing_DAO_Mailing();
+      $dao = new CRM_VoiceBroadcast_DAO_VoiceBroadcast();
       $dao->id = $mailingID;
       $dao->find(TRUE);
       // override_verp must be flipped, as in 3.2 we reverted
@@ -108,41 +108,15 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
    */
   public function buildQuickForm() {
 
-    $this->addElement('checkbox', 'override_verp', ts('Track Replies?'));
 
-    $defaults['override_verp'] = CRM_Core_BAO_Setting::getItem(CRM_Core_BAO_Setting::MAILING_PREFERENCES_NAME,
-      'track_civimail_replies', NULL, FALSE
-    );
+    $this->add('checkbox', 'is_track_call_disposition', '');
+    $defaults['is_track_call_disposition'] = FALSE;
 
-    $this->add('checkbox', 'forward_replies', ts('Forward Replies?'));
-    $defaults['forward_replies'] = FALSE;
+    $this->add('checkbox', 'is_track_call_duration', '');
+    $defaults['is_track_call_duration'] = FALSE;
 
-    $this->add('checkbox', 'url_tracking', ts('Track Click-throughs?'));
-    $defaults['url_tracking'] = TRUE;
-
-    $this->add('checkbox', 'open_tracking', ts('Track Opens?'));
-    $defaults['open_tracking'] = TRUE;
-
-    $this->add('checkbox', 'auto_responder', ts('Auto-respond to Replies?'));
-    $defaults['auto_responder'] = FALSE;
-
-    $this->add('select', 'visibility', ts('Mailing Visibility'), CRM_Core_SelectValues::groupVisibility(), TRUE);
-
-    $this->add('select', 'reply_id', ts('Auto-responder'),
-      CRM_Mailing_PseudoConstant::component('Reply'), TRUE
-    );
-
-    $this->add('select', 'unsubscribe_id', ts('Unsubscribe Message'),
-      CRM_Mailing_PseudoConstant::component('Unsubscribe'), TRUE
-    );
-
-    $this->add('select', 'resubscribe_id', ts('Resubscribe Message'),
-      CRM_Mailing_PseudoConstant::component('Resubscribe'), TRUE
-    );
-
-    $this->add('select', 'optout_id', ts('Opt-out Message'),
-      CRM_Mailing_PseudoConstant::component('OptOut'), TRUE
-    );
+    $this->add('checkbox', 'is_track_call_cost', '');
+    $defaults['is_track_call_cost'] = FALSE;
 
     $buttons = array(
       array('type' => 'back',
@@ -175,15 +149,9 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
     $session = CRM_Core_Session::singleton();
     $params['created_id'] = $session->get('userID');
 
-    $uploadParams = array('reply_id', 'unsubscribe_id', 'optout_id', 'resubscribe_id');
-    $uploadParamsBoolean = array('override_verp', 'forward_replies', 'url_tracking', 'open_tracking', 'auto_responder');
+    $uploadParamsBoolean = array('is_track_call_disposition', 'is_track_call_duration', 'is_track_call_cost');
 
     $qf_Settings_submit = $this->controller->exportValue($this->_name, '_qf_Settings_submit');
-
-    foreach ($uploadParams as $key) {
-      $params[$key] = $this->controller->exportvalue($this->_name, $key);
-      $this->set($key, $this->controller->exportvalue($this->_name, $key));
-    }
 
     foreach ($uploadParamsBoolean as $key) {
       if ($this->controller->exportvalue($this->_name, $key)) {
@@ -197,54 +165,14 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
 
     $params['visibility'] = $this->controller->exportvalue($this->_name, 'visibility');
 
-    // override_verp must be flipped, as in 3.2 we reverted
-    // its meaning to ‘should CiviMail manage replies?’ – i.e.,
-    // ‘should it *not* override Reply-To: with VERP-ed address?’
-    $params['override_verp'] = !$params['override_verp'];
+    $ids['voice_id'] = $this->get('mailing_id');
 
-    $ids['mailing_id'] = $this->get('mailing_id');
-
-    // update mailing
-    CRM_Mailing_BAO_Mailing::create($params, $ids);
+    // update voicebroadcast
+    CRM_VoiceBroadcast_BAO_VoiceBroadcast::create($params, $ids);
 
     if ($qf_Settings_submit) {
-      //when user perform mailing from search context
-      //redirect it to search result CRM-3711.
-      $ssID = $this->get('ssID');
-      if ($ssID && $this->_searchBasedMailing) {
-        if ($this->_action == CRM_Core_Action::BASIC) {
-          $fragment = 'search';
-        }
-        elseif ($this->_action == CRM_Core_Action::PROFILE) {
-          $fragment = 'search/builder';
-        }
-        elseif ($this->_action == CRM_Core_Action::ADVANCED) {
-          $fragment = 'search/advanced';
-        }
-        else {
-          $fragment = 'search/custom';
-        }
-
-        $context = $this->get('context');
-        if (!CRM_Contact_Form_Search::isSearchContext($context)) {
-          $context = 'search';
-        }
-        $urlParams = "force=1&reset=1&ssID={$ssID}&context={$context}";
-        $qfKey = CRM_Utils_Request::retrieve('qfKey', 'String', $this);
-        if (CRM_Utils_Rule::qfKey($qfKey)) {
-          $urlParams .= "&qfKey=$qfKey";
-        }
-
-        $draftURL = CRM_Utils_System::url('civicrm/mailing/browse/unscheduled', 'scheduled=false&reset=1');
-        $status = ts("You can continue later by clicking the 'Continue' action to resume working on it.<br />From <a href='%1'>Draft and Unscheduled Mailings</a>.", array(1 => $draftURL));
-
-        // Redirect user to search.
-        $url = CRM_Utils_System::url('civicrm/contact/' . $fragment, $urlParams);
-      }
-      else {
-        $status = ts("Click the 'Continue' action to resume working on it.");
-        $url = CRM_Utils_System::url('civicrm/mailing/browse/unscheduled', 'scheduled=false&reset=1');
-      }
+      $status = ts("Click the 'Continue' action to resume working on it.");
+      $url = CRM_Utils_System::url('civicrm/voicebroadcast/browse/unscheduled', 'scheduled=false&reset=1');
       CRM_Core_Session::setStatus($status, ts('Mailing Saved'), 'success');
       CRM_Utils_System::redirect($url);
     }
@@ -258,6 +186,6 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
    * @return string
    */
   public function getTitle() {
-    return ts('Track and Respond');
+    return ts('Track & Respond');
   }
 }

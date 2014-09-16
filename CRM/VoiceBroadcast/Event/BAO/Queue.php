@@ -90,7 +90,7 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
    */
   public static function &verify($job_id, $queue_id, $hash) {
     $success = NULL;
-    $q = new CRM_Mailing_Event_BAO_Queue();
+    $q = new CRM_Broadcast_Event_BAO_Queue();
     if (!empty($job_id) && !empty($queue_id) && !empty($hash)) {
       $q->id     = $queue_id;
       $q->job_id = $job_id;
@@ -120,7 +120,7 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
                     ON          $eq.email_id = $email.id
                     WHERE       $eq.id = " . CRM_Utils_Type::rule($queue_id, 'Integer');
 
-    $q = new CRM_Mailing_Event_BAO_Queue();
+    $q = new CRM_VoiceBroadcast_Event_BAO_Queue();
     $q->query($query);
     if (!$q->fetch()) {
       return NULL;
@@ -143,8 +143,8 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
     $dao = new CRM_Core_DAO();
 
     $queue   = self::getTableName();
-    $mailing = CRM_Mailing_BAO_Mailing::getTableName();
-    $job     = CRM_Mailing_BAO_MailingJob::getTableName();
+    $mailing = CRM_VoiceBroadcast_BAO_VoiceBroadcast::getTableName();
+    $job     = CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::getTableName();
 
     $dao->query("
             SELECT      COUNT(*) as queued
@@ -152,7 +152,7 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
             INNER JOIN  $job
                     ON  $queue.job_id = $job.id
             INNER JOIN  $mailing
-                    ON  $job.mailing_id = $mailing.id
+                    ON  $job.voice_id = $mailing.id
                     AND $job.is_test = 0
             WHERE       $mailing.id = " . CRM_Utils_Type::escape($mailing_id, 'Integer') . ($job_id ? " AND $job.id = " . CRM_Utils_Type::escape($job_id,
           'Integer'
@@ -182,8 +182,8 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
     $dao = new CRM_Core_Dao();
 
     $queue   = self::getTableName();
-    $mailing = CRM_Mailing_BAO_Mailing::getTableName();
-    $job     = CRM_Mailing_BAO_MailingJob::getTableName();
+    $mailing = CRM_VoiceBroadcast_BAO_VoiceBroadcast::getTableName();
+    $job     = CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::getTableName();
     $contact = CRM_Contact_BAO_Contact::getTableName();
     $email   = CRM_Core_BAO_Email::getTableName();
 
@@ -211,7 +211,7 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
             INNER JOIN  $job
                     ON  $queue.job_id = $job.id
             INNER JOIN  $mailing
-                    ON  $job.mailing_id = $mailing.id
+                    ON  $job.voice_id = $mailing.id
                     AND $job.is_test = 0
             WHERE       $mailing.id = " . CRM_Utils_Type::escape($mailing_id, 'Integer');
 
@@ -252,16 +252,16 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
    * @access public
    */
   public function &getMailing() {
-    $mailing  = new CRM_Mailing_BAO_Mailing();
-    $jobs     = CRM_Mailing_BAO_MailingJob::getTableName();
-    $mailings = CRM_Mailing_BAO_Mailing::getTableName();
+    $mailing  = new CRM_VoiceBroadcast_BAO_VoiceBroadcast();
+    $jobs     = CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::getTableName();
+    $mailings = CRM_VoiceBroadcast_BAO_VoiceBroadcast::getTableName();
     $queue    = self::getTableName();
 
     $mailing->query("
                 SELECT      $mailings.*
                 FROM        $mailings
                 INNER JOIN  $jobs
-                        ON  $jobs.mailing_id = $mailings.id
+                        ON  $jobs.voice_id = $mailings.id
                 INNER JOIN  $queue
                         ON  $queue.job_id = $jobs.id
                 WHERE       $queue.id = {$this->id}");
@@ -276,15 +276,15 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
    */
   public static function getContactInfo($queueID) {
     $query = "
-SELECT DISTINCT(civicrm_mailing_event_queue.contact_id) as contact_id,
+SELECT DISTINCT(civicrm_voicebroadcast_event_queue.contact_id) as contact_id,
        civicrm_contact.display_name as display_name,
        civicrm_email.email as email
-  FROM civicrm_mailing_event_queue,
+  FROM civicrm_voicebroadcast_event_queue,
        civicrm_contact,
        civicrm_email
- WHERE civicrm_mailing_event_queue.contact_id = civicrm_contact.id
-   AND civicrm_mailing_event_queue.email_id = civicrm_email.id
-   AND civicrm_mailing_event_queue.id = " . CRM_Utils_Type::escape($queueID, 'Integer');
+ WHERE civicrm_voicebroadcast_event_queue.contact_id = civicrm_contact.id
+   AND civicrm_voicebroadcast_event_queue.email_id = civicrm_email.id
+   AND civicrm_voicebroadcast_event_queue.id = " . CRM_Utils_Type::escape($queueID, 'Integer');
 
     $dao = CRM_Core_DAO::executeQuery($query, CRM_Core_DAO::$_nullArray);
 
@@ -318,7 +318,7 @@ SELECT DISTINCT(civicrm_mailing_event_queue.contact_id) as contact_id,
     while (!empty($values)) {
       $input = array_splice($values, 0, CRM_Core_DAO::BULK_INSERT_COUNT);
       $str   = implode(',', $input);
-      $sql   = "INSERT INTO civicrm_mailing_event_queue ( job_id, email_id, contact_id, phone_id, hash ) VALUES $str;";
+      $sql   = "INSERT INTO civicrm_voicebroadcast_event_queue ( job_id, email_id, contact_id, phone_id, hash ) VALUES $str;";
       CRM_Core_DAO::executeQuery($sql);
     }
   }
