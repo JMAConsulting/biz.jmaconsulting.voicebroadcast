@@ -268,10 +268,12 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $session = CRM_Core_Session::singleton();
     $params['contact_id'] = $session->get('userID');
     
+    $fileTypes = CRM_Core_OptionGroup::values('file_type', TRUE); // This is needed for an exact match on duplicate voice broadcasts
+    
     // Add voice files to mailing
     CRM_Core_BAO_File::filePostProcess(
       $formValues[$fileType]['name'],
-      1,
+      $fileTypes['Voice File'],
       'civicrm_voicebroadcast',
       $this->_mailingID,
       NULL,
@@ -282,7 +284,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     );
     $ids['voice_id'] = $this->_mailingID;
 
-    //get the from Name
+    //get the sender phone number
     $params['from_name'] = $this->_submitValues['phone_number'];
 
 
