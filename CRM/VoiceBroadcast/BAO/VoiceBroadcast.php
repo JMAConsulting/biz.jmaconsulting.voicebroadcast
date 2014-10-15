@@ -1399,8 +1399,8 @@ ORDER BY   civicrm_email.is_bulkmail DESC
      * condition on the existence of a scheduled date
      */
     if (!empty($params['scheduled_date']) && $params['scheduled_date'] != 'null') {
-      $job = new CRM_Mailing_BAO_MailingJob();
-      $job->mailing_id = $mailing->id;
+      $job = new CRM_VoiceBroadcast_BAO_VoiceBroadcastJob();
+      $job->voice_id = $mailing->id;
       $job->status = 'Scheduled';
       $job->is_test = 0;
 
