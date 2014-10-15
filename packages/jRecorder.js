@@ -1,20 +1,3 @@
-/*
- * jRecorder Plugin for jQuery JavaScript Library (Alpha)
- * http://www.sajithmr.me/jrecorder
- *
- * Copyright (c) 2011 - 2013 Sajithmr.ME
- * Dual licensed under the MIT and GPL licenses.
- *  - http://www.opensource.org/licenses/mit-license.php
- *  - http://www.gnu.org/copyleft/gpl.html
- *
- * Author: Sajith Amma
- * Version: 1.1
- * Date: 14 December 2011
- */
-
-/* Code is not verified using http://www.jshint.com/ */
-
-
 (function ($){
 	
 	
