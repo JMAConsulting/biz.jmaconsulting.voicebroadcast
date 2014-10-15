@@ -42,7 +42,6 @@
   <fieldset id="upload_id"><legend>{ts}Upload Content{/ts}</legend>
     <table class="form-layout-compressed">
         <tr class="crm-mailing-upload-form-block-textFile">	
-	<td>Time: <span id="time">0:00</span> </td>
             <td class="label">Record a voice message</td>
             <td>
 		<input type="button" id="record" value="Record">  <br />
@@ -54,7 +53,6 @@
             <td>
 		<input type="button" id="send" value="Save Voice Recording">
             </td>
-	<td>Status: <span id="status"></span></td>
         </tr>
         <tr class="crm-mailing-upload-form-block-textFile">
             <td class="label">{$form.voiceFile.label}</td>
@@ -70,14 +68,49 @@
 
 {literal}
 <script type="text/javascript">
-cj(document).ready( function() {
+
+// Phone numbers
+var numbers = [];
+
+function fn() {
+
+var option = '';
+for (i=0;i<numbers.length;i++){
+   option += '<option value="'+ numbers[i] + '">' + numbers[i] + '</option>';
+}
+cj('#phone_number option[value!=""]').remove();
+cj('#phone_number').append(option);
+numbers = [];
+}
+
+cj('#contact_id').change(function () {
+
+var cid = cj('#contact_id').val();
+
+CRM.api3('Phone', 'get', {contact_id:cid})
+  .done(function(result) {
+    cj.each(result.values, function(key, value) {
+      numbers.push(value.phone);
+    });
+    fn();
+  });
+
+});
+
+
+
+// Recorder stuff
+
 var recName = '{/literal}{$recName}{literal}';
+var swfURL = '{/literal}{$swfURL}{literal}';
+var uploadPath = '{/literal}{$uploadPath}{literal}';
+cj("input[name='voice_rec']").val('');
 
 cj.jRecorder(     
      { 
         host : recName,
         
-        callback_started_recording:     function(){callback_started(); },
+        callback_started_recording:     function(){ callback_started(); },
         callback_stopped_recording:     function(){callback_stopped(); },
         callback_activityLevel:          function(level){callback_activityLevel(level); },
         callback_activityTime:     function(time){callback_activityTime(time); },
@@ -85,7 +118,7 @@ cj.jRecorder(
         callback_finished_sending:     function(time){ callback_finished_sending() },
 
 
-        swf_path: 'http://localhost/jRecorder/html/jRecorder.swf',
+        swf_path: swfURL,
      
      }
    );
@@ -100,6 +133,7 @@ cj('#stop').click(function(){
 
 cj('#send').click(function(){
     cj.jRecorder.sendData();
+    cj("input[name='voice_rec']").val(uploadPath + '.wav');
     });
 
  function callback_finished() {
@@ -114,7 +148,6 @@ function callback_activityTime(time) {
     $('#time').html(time);
    }
 
-});
    
 </script>
 {/literal}
