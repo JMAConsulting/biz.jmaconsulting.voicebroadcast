@@ -61,7 +61,7 @@ class CRM_VoiceBroadcast_Form_Schedule extends CRM_Core_Form {
       $result = CRM_Core_BAO_PrevNextCache::getSelectedContacts();
       $this->assign("value", $result);
     }
-    $this->_mailingID = $this->get('mailing_id');
+    $this->_mailingID = $this->get('voice_id');
     $this->_scheduleFormOnly = FALSE;
     if (!$this->_mailingID) {
       $this->_mailingID = CRM_Utils_Request::retrieve('mid', 'Integer', $this, TRUE);
@@ -267,10 +267,10 @@ class CRM_VoiceBroadcast_Form_Schedule extends CRM_Core_Form {
   public function postProcess() {
     $params = array();
 
-    $params['mailing_id'] = $ids['mailing_id'] = $this->_mailingID;
+    $params['voice_id'] = $ids['voice_id'] = $this->_mailingID;
 
-    if (empty($params['mailing_id'])) {
-      CRM_Core_Error::fatal(ts('Could not find a mailing id'));
+    if (empty($params['voice_id'])) {
+      CRM_Core_Error::fatal(ts('Could not find a voice id'));
     }
 
     foreach (array('now', 'start_date', 'start_date_time') as $parameter) {
@@ -309,7 +309,7 @@ class CRM_VoiceBroadcast_Form_Schedule extends CRM_Core_Form {
     }
 
     /* Build the mailing object */
-    CRM_Mailing_BAO_Mailing::create($params, $ids);
+    CRM_VoiceBroadcast_BAO_VoiceBroadcast::create($params, $ids);
 
     //when user perform mailing from search context
     //redirect it to search result CRM-3711.
