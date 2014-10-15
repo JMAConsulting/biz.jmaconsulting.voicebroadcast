@@ -198,8 +198,9 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $config  = CRM_Core_Config::singleton();
     $options = array();
     $tempVar = FALSE;
-
-    // this seems so hacky, not sure what we are doing here and why. Need to investigate and fix
+    $recName = 'Voice_' . $this->_mailingID . '_' . date('Hims');
+    $recName = CRM_Utils_System::url('civicrm/voice/addrecording', "filename={$recName}", TRUE, NULL, TRUE, TRUE, FALSE);
+    CRM_Core_Resources::singleton()->addScriptFile('biz.jmaconsulting.voicebroadcast', 'packages/jRecorder.js', 10, 'html-header');
     $session->getVars($options,
       "CRM_VoiceBroadcast_Controller_Send_{$this->controller->_key}"
     );
@@ -208,6 +209,10 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $this->add('select', 'phone_number',
       ts('Phone Number'), array(
         '' => '- select -'), FALSE
+    );
+    
+    $this->add('hidden', 'voice_rec',
+      ts('Voice Recording'), NULL,  FALSE
     );
 
     $this->addElement('file', 'voiceFile', ts('Upload Voice Message'), 'size=30 maxlength=60');
@@ -239,88 +244,34 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
       ),
     );
     $this->addButtons($buttons);
+    $this->assign('recName', $recName);
   }
+
 
   public function postProcess() {
     $params       = $ids = array();
     $uploadParams = array('contact_id', 'phone_number');
-    $fileType     = array('voiceFile');
+    $fileType     = 'voiceFile';
 
     $formValues = $this->controller->exportValues($this->_name);
-
-    if (!$formValues['upload_type']) {
-      foreach ($fileType as $key) {
-        $contents = NULL;
-        if (isset($formValues[$key]) &&
-          !empty($formValues[$key])
-        ) {
-          $contents = file_get_contents($formValues[$key]['name']);
-          $this->set($key, $formValues[$key]['name']);
-        }
-      }
-    }
-
     $params['name'] = $this->get('name');
 
     $session = CRM_Core_Session::singleton();
     $params['contact_id'] = $session->get('userID');
-    $composeFields = array(
-      'template', 'saveTemplate',
-      'updateTemplate', 'saveTemplateName',
+    
+    // Add voice files to mailing
+    CRM_Core_BAO_File::filePostProcess(
+      $formValues[$fileType]['name'],
+      1,
+      'civicrm_voicebroadcast',
+      $this->_mailingID,
+      NULL,
+      TRUE,
+      NULL,
+      $fileType,
+      $formValues[$fileType]['type']
     );
-    $msgTemplate = NULL;
-    //mail template is composed
-    if ($formValues['upload_type']) {
-      $composeParams = array();
-
-      foreach ($composeFields as $key) {
-        if (!empty($formValues[$key])) {
-          $composeParams[$key] = $formValues[$key];
-          $this->set($key, $formValues[$key]);
-        }
-      }
-
-      if (!empty($composeParams['updateTemplate'])) {
-        $templateParams = array(
-          'msg_text' => $text_message,
-          'msg_html' => $html_message,
-          'msg_subject' => $params['subject'],
-          'is_active' => TRUE,
-        );
-
-        $templateParams['id'] = $formValues['template'];
-
-        $msgTemplate = CRM_Core_BAO_MessageTemplate::add($templateParams);
-      }
-
-      if (!empty($composeParams['saveTemplate'])) {
-        $templateParams = array(
-          'msg_text' => $text_message,
-          'msg_html' => $html_message,
-          'msg_subject' => $params['subject'],
-          'is_active' => TRUE,
-        );
-
-        $templateParams['msg_title'] = $composeParams['saveTemplateName'];
-
-        $msgTemplate = CRM_Core_BAO_MessageTemplate::add($templateParams);
-      }
-
-      if (isset($msgTemplate->id)) {
-        $params['msg_template_id'] = $msgTemplate->id;
-      }
-      else {
-        $params['msg_template_id'] = CRM_Utils_Array::value('template', $formValues);
-      }
-      $this->set('template', $params['msg_template_id']);
-    }
-
-    CRM_Core_BAO_File::formatAttachment($formValues,
-      $params,
-      'civicrm_mailing',
-      $this->_mailingID
-    );
-    $ids['mailing_id'] = $this->_mailingID;
+    $ids['voice_id'] = $this->_mailingID;
 
     //handle mailing from name & address.
     $fromEmailAddress = CRM_Utils_Array::value($formValues['from_email_address'],
@@ -333,15 +284,10 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     //get the from Name
     $params['from_name'] = CRM_Utils_Array::value(1, explode('"', $fromEmailAddress));
 
-    //Add Reply-To to headers
-    if (!empty($formValues['reply_to_address'])) {
-      $replyToEmail = CRM_Core_OptionGroup::values('from_email_address');
-      $params['replyto_email'] = CRM_Utils_Array::value($formValues['reply_to_address'], $replyToEmail);
-    }
 
     /* Build the mailing object */
 
-    CRM_Mailing_BAO_Mailing::create($params, $ids);
+    CRM_VoiceBroadcast_BAO_VoiceBroadcast::create($params, $ids);
 
     if (isset($this->_submitValues['_qf_Upload_upload_save']) &&
       $this->_submitValues['_qf_Upload_upload_save'] == 'Save & Continue Later'

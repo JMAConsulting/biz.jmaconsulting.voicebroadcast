@@ -7,9 +7,9 @@
     <access_arguments>access CiviCRM</access_arguments>
   </item>
   <item>
-    <path>civicrm/voice</path>
-    <page_callback>CRM_Voice_Page_Voice</page_callback>
-    <title>Voice</title>
+    <path>civicrm/voice/addrecording</path>
+    <page_callback>CRM_VoiceBroadcast_Page_AddRecording</page_callback>
+    <title>Add Recording</title>
     <access_arguments>access CiviCRM</access_arguments>
   </item>
   <item>

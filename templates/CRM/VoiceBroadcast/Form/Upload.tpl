@@ -31,7 +31,7 @@
 </div>
 
 {include file="CRM/Mailing/Form/Count.tpl"}
-
+{$form.voice_rec.html}
 <table class="form-layout-compressed">
     <tr class="crm-mailing-upload-form-block-from_email_address"><td class="label">{$form.contact_id.label}</td>
         <td>{$form.contact_id.html} {help id ="id-from_email" isAdmin=$isAdmin}</td><td class="label">{$form.phone_number.label}</td>
@@ -41,6 +41,21 @@
 
   <fieldset id="upload_id"><legend>{ts}Upload Content{/ts}</legend>
     <table class="form-layout-compressed">
+        <tr class="crm-mailing-upload-form-block-textFile">	
+	<td>Time: <span id="time">0:00</span> </td>
+            <td class="label">Record a voice message</td>
+            <td>
+		<input type="button" id="record" value="Record">  <br />
+                <span class="description">{ts}Record a voice message{/ts}</span>
+            </td>
+            <td>
+		<input type="button" id="stop" value="Stop">
+            </td>
+            <td>
+		<input type="button" id="send" value="Save Voice Recording">
+            </td>
+	<td>Status: <span id="status"></span></td>
+        </tr>
         <tr class="crm-mailing-upload-form-block-textFile">
             <td class="label">{$form.voiceFile.label}</td>
             <td>{$form.voiceFile.html}<br />
@@ -55,5 +70,51 @@
 
 {literal}
 <script type="text/javascript">
+cj(document).ready( function() {
+var recName = '{/literal}{$recName}{literal}';
+
+cj.jRecorder(     
+     { 
+        host : recName,
+        
+        callback_started_recording:     function(){callback_started(); },
+        callback_stopped_recording:     function(){callback_stopped(); },
+        callback_activityLevel:          function(level){callback_activityLevel(level); },
+        callback_activityTime:     function(time){callback_activityTime(time); },
+        
+        callback_finished_sending:     function(time){ callback_finished_sending() },
+
+
+        swf_path: 'http://localhost/jRecorder/html/jRecorder.swf',
+     
+     }
+   );
+
+cj('#record').click(function(){         
+    cj.jRecorder.record(30); //record up to 30 sec and stops automatically              
+   });
+
+cj('#stop').click(function(){
+    cj.jRecorder.stop();
+   });
+
+cj('#send').click(function(){
+    cj.jRecorder.sendData();
+    });
+
+ function callback_finished() {
+  cj('#status').html('Recording is finished');
+   }         
+                    
+ function callback_started() {
+  cj('#status').html('Recording is started');
+   }
+
+function callback_activityTime(time) {
+    $('#time').html(time);
+   }
+
+});
+   
 </script>
 {/literal}
