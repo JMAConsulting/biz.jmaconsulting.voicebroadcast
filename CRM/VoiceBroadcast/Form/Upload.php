@@ -199,8 +199,11 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $options = array();
     $tempVar = FALSE;
     $recName = 'Voice_' . $this->_mailingID . '_' . date('Hims');
+    $uploadPath = $config->customFileUploadDir . $recName;
     $recName = CRM_Utils_System::url('civicrm/voice/addrecording', "filename={$recName}", TRUE, NULL, TRUE, TRUE, FALSE);
     CRM_Core_Resources::singleton()->addScriptFile('biz.jmaconsulting.voicebroadcast', 'packages/jRecorder.js', 10, 'html-header');
+    $swfURL = $config->extensionsURL . 'biz.jmaconsulting.voicebroadcast/packages/jRecorder.swf';
+
     $session->getVars($options,
       "CRM_VoiceBroadcast_Controller_Send_{$this->controller->_key}"
     );
@@ -245,6 +248,8 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     );
     $this->addButtons($buttons);
     $this->assign('recName', $recName);
+    $this->assign('uploadPath', $uploadPath);
+    $this->assign('swfURL', $swfURL);
   }
 
 
@@ -253,8 +258,12 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $uploadParams = array('contact_id', 'phone_number');
     $fileType     = 'voiceFile';
 
-    $formValues = $this->controller->exportValues($this->_name);
+    $formValues = $this->controller->exportValues();
     $params['name'] = $this->get('name');
+    if (CRM_Utils_Array::value('voice_rec', $formValues)) {
+      $formValues[$fileType]['name'] = $formValues['voice_rec'];
+      $formValues[$fileType]['type'] = 'audio/x-wav';
+    }
 
     $session = CRM_Core_Session::singleton();
     $params['contact_id'] = $session->get('userID');
@@ -273,65 +282,20 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     );
     $ids['voice_id'] = $this->_mailingID;
 
-    //handle mailing from name & address.
-    $fromEmailAddress = CRM_Utils_Array::value($formValues['from_email_address'],
-      CRM_Core_OptionGroup::values('from_email_address')
-    );
-
-    //get the from email address
-    $params['from_email'] = CRM_Utils_Mail::pluckEmailFromHeader($fromEmailAddress);
-
     //get the from Name
-    $params['from_name'] = CRM_Utils_Array::value(1, explode('"', $fromEmailAddress));
+    $params['from_name'] = $this->_submitValues['phone_number'];
 
 
-    /* Build the mailing object */
+    /* Build the voice broadcast object */
 
     CRM_VoiceBroadcast_BAO_VoiceBroadcast::create($params, $ids);
 
     if (isset($this->_submitValues['_qf_Upload_upload_save']) &&
       $this->_submitValues['_qf_Upload_upload_save'] == 'Save & Continue Later'
     ) {
-      //when user perform mailing from search context
-      //redirect it to search result CRM-3711.
-      $ssID = $this->get('ssID');
-      if ($ssID && $this->_searchBasedMailing) {
-        if ($this->_action == CRM_Core_Action::BASIC) {
-          $fragment = 'search';
-        }
-        elseif ($this->_action == CRM_Core_Action::PROFILE) {
-          $fragment = 'search/builder';
-        }
-        elseif ($this->_action == CRM_Core_Action::ADVANCED) {
-          $fragment = 'search/advanced';
-        }
-        else {
-          $fragment = 'search/custom';
-        }
-
-        $context = $this->get('context');
-        if (!CRM_Contact_Form_Search::isSearchContext($context)) {
-          $context = 'search';
-        }
-        $urlParams = "force=1&reset=1&ssID={$ssID}&context={$context}";
-        $qfKey = CRM_Utils_Request::retrieve('qfKey', 'String', $this);
-        if (CRM_Utils_Rule::qfKey($qfKey)) {
-          $urlParams .= "&qfKey=$qfKey";
-        }
-
-        $session  = CRM_Core_Session::singleton();
-        $draftURL = CRM_Utils_System::url('civicrm/mailing/browse/unscheduled', 'scheduled=false&reset=1');
-        $status   = ts("You can continue later by clicking the 'Continue' action to resume working on it.<br />From <a href='%1'>Draft and Unscheduled Mailings</a>.", array(1 => $draftURL));
-        CRM_Core_Session::setStatus($status, ts('Mailing Saved'), 'success');
-
-        // Redirect user to search.
-        $url = CRM_Utils_System::url('civicrm/contact/' . $fragment, $urlParams);
-      }
-      else {
-        $status = ts("Click the 'Continue' action to resume working on it.");
-        $url = CRM_Utils_System::url('civicrm/mailing/browse/unscheduled', 'scheduled=false&reset=1');
-      }
-      CRM_Core_Session::setStatus($status, ts('Mailing Saved'), 'success');
+      $status = ts("Click the 'Continue' action to resume working on it.");
+      $url = CRM_Utils_System::url('civicrm/mailing/browse/unscheduled', 'scheduled=false&reset=1');
+      CRM_Core_Session::setStatus($status, ts('Voice Broadcast Saved'), 'success');
       return $this->controller->setDestination($url);
     }
   }
@@ -349,166 +313,22 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
    * @static
    */
   static function formRule($params, $files, $self) {
-    return array();
     if (!empty($_POST['_qf_Import_refresh'])) {
       return TRUE;
     }
     $errors = array();
-    $template = CRM_Core_Smarty::singleton();
-
-
-    if (isset($params['html_message'])) {
-      $htmlMessage = str_replace(array("\n", "\r"), ' ', $params['html_message']);
-      $htmlMessage = str_replace("'", "\'", $htmlMessage);
-      $template->assign('htmlContent', $htmlMessage);
+    if (!CRM_Utils_Array::value('phone_number', $params)) {
+      $params['phone_number'] = ts('Please select a contact with a valid phone number');
     }
-
-    $domain = CRM_Core_BAO_Domain::getDomain();
-
-    $mailing = new CRM_Mailing_BAO_Mailing();
-    $mailing->id = $self->_mailingID;
-    $mailing->find(TRUE);
-
-    $session = CRM_Core_Session::singleton();
-    $values = array('contact_id' => $session->get('userID'),
-      'version' => 3,
-    );
-    require_once 'api/api.php';
-    $contact = civicrm_api('contact', 'get', $values);
-
-    //CRM-4524
-    $contact = reset($contact['values']);
-
-    $verp = array_flip(array('optOut', 'reply', 'unsubscribe', 'resubscribe', 'owner'));
-    foreach ($verp as $key => $value) {
-      $verp[$key]++;
-    }
-
-    $urls = array_flip(array('forward', 'optOutUrl', 'unsubscribeUrl', 'resubscribeUrl'));
-    foreach ($urls as $key => $value) {
-      $urls[$key]++;
-    }
-
-
-    // set $header and $footer
-    foreach (array(
-      'header', 'footer') as $part) {
-      $$part = array();
-      if ($params["{$part}_id"]) {
-        //echo "found<p>";
-        $component = new CRM_Mailing_BAO_Component();
-        $component->id = $params["{$part}_id"];
-        $component->find(TRUE);
-        ${$part}['textFile'] = $component->body_text;
-        ${$part}['htmlFile'] = $component->body_html;
-        $component->free();
-      }
-      else {
-        ${$part}['htmlFile'] = ${$part}['textFile'] = '';
+    if (CRM_Utils_Array::value('voice_rec', $params) && CRM_Utils_Array::value('name', $files['voiceFile'])) {
+      if (file_exists($params['voice_rec'])) {
+        $errors['voiceFile'] = ts('Please only upload OR record a voice file');
       }
     }
-
-
-    $skipTextFile = $self->get('skipTextFile');
-    $skipHtmlFile = $self->get('skipHtmlFile');
-
-    if (!$params['upload_type']) {
-      if ((!isset($files['textFile']) || !file_exists($files['textFile']['tmp_name'])) &&
-        (!isset($files['htmlFile']) || !file_exists($files['htmlFile']['tmp_name']))
-      ) {
-        if (!($skipTextFile || $skipHtmlFile)) {
-          $errors['textFile'] = ts('Please provide either a Text or HTML formatted message - or both.');
-        }
-      }
+    if (!CRM_Utils_Array::value('voice_rec', $params) && !CRM_Utils_Array::value('name', $files['voiceFile'])) {
+      $errors['voiceFile'] = ts('Please upload OR record a voice file');
     }
-    else {
-      if (empty($params['text_message']) && empty($params['html_message'])) {
-        $errors['html_message'] = ts('Please provide either a Text or HTML formatted message - or both.');
-      }
-      if (!empty($params['saveTemplate']) && empty($params['saveTemplateName'])) {
-        $errors['saveTemplateName'] = ts('Please provide a Template Name.');
-      }
-    }
-
-    foreach (array(
-      'text', 'html') as $file) {
-      if (!$params['upload_type'] && !file_exists(CRM_Utils_Array::value('tmp_name', $files[$file . 'File']))) {
-        continue;
-      }
-      if ($params['upload_type'] && !$params[$file . '_message']) {
-        continue;
-      }
-
-      if (!$params['upload_type']) {
-        $str = file_get_contents($files[$file . 'File']['tmp_name']);
-        $name = $files[$file . 'File']['name'];
-      }
-      else {
-        $str  = $params[$file . '_message'];
-        $str  = ($file == 'html') ? str_replace('%7B', '{', str_replace('%7D', '}', $str)) : $str;
-        $name = $file . ' message';
-      }
-
-      /* append header/footer */
-
-      $str = $header[$file . 'File'] . $str . $footer[$file . 'File'];
-
-      $dataErrors = array();
-
-      /* First look for missing tokens */
-
-      if (!CRM_Core_BAO_Setting::getItem(CRM_Core_BAO_Setting::MAILING_PREFERENCES_NAME, 'disable_mandatory_tokens_check')) {
-        $err = CRM_Utils_Token::requiredTokens($str);
-        if ($err !== TRUE) {
-          foreach ($err as $token => $desc) {
-            $dataErrors[] = '<li>' . ts('This message is missing a required token - {%1}: %2',
-              array(1 => $token, 2 => $desc)
-            ) . '</li>';
-          }
-        }
-      }
-
-      /* Do a full token replacement on a dummy verp, the current
-             * contact and domain, and the first organization. */
-
-
-      // here we make a dummy mailing object so that we
-      // can retrieve the tokens that we need to replace
-      // so that we do get an invalid token error
-      // this is qute hacky and I hope that there might
-      // be a suggestion from someone on how to
-      // make it a bit more elegant
-
-      $dummy_mail        = new CRM_Mailing_BAO_Mailing();
-      $mess              = "body_{$file}";
-      $dummy_mail->$mess = $str;
-      $tokens            = $dummy_mail->getTokens();
-
-      $str = CRM_Utils_Token::replaceSubscribeInviteTokens($str);
-      $str = CRM_Utils_Token::replaceDomainTokens($str, $domain, NULL, $tokens[$file]);
-      $str = CRM_Utils_Token::replaceMailingTokens($str, $mailing, NULL, $tokens[$file]);
-      $str = CRM_Utils_Token::replaceOrgTokens($str, $org);
-      $str = CRM_Utils_Token::replaceActionTokens($str, $verp, $urls, NULL, $tokens[$file]);
-      $str = CRM_Utils_Token::replaceContactTokens($str, $contact, NULL, $tokens[$file]);
-
-      $unmatched = CRM_Utils_Token::unmatchedTokens($str);
-
-      if (!empty($unmatched) && 0) {
-        foreach ($unmatched as $token) {
-          $dataErrors[] = '<li>' . ts('Invalid token code') . ' {' . $token . '}</li>';
-        }
-      }
-      if (!empty($dataErrors)) {
-        $errors[$file . 'File'] = ts('The following errors were detected in %1:', array(
-          1 => $name)) . ' <ul>' . implode('', $dataErrors) . '</ul><br /><a href="' . CRM_Utils_System::docURL2('Sample CiviMail Messages', TRUE, NULL, NULL, NULL, "wiki") . '" target="_blank">' . ts('More information on required tokens...') . '</a>';
-      }
-    }
-
-    $templateName = CRM_Core_BAO_MessageTemplate::getMessageTemplates();
-    if (!empty($params['saveTemplate']) && in_array(CRM_Utils_Array::value('saveTemplateName', $params), $templateName)
-    ) {
-      $errors['saveTemplate'] = ts('Duplicate Template Name.');
-    }
+    
     return empty($errors) ? TRUE : $errors;
   }
 
