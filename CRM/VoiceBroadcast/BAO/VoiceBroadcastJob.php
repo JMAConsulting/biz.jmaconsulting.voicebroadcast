@@ -78,7 +78,7 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
 
     $config       = CRM_Core_Config::singleton();
     $jobTable     = CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::getTableName();
-    $mailingTable = CRM_VoiceBroadcast_BAO_VoiceBroadcast::getTableName();
+    $broadcastTable = CRM_VoiceBroadcast_BAO_VoiceBroadcast::getTableName();
 
     if (!empty($testParams)) {
       $query = "
@@ -91,16 +91,13 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
       $currentTime = date('YmdHis');
       $domainID    = CRM_Core_Config::domainID();
 
-      $modeClause = 'AND m.sms_provider_id IS NULL';
-
       // Select the first child job that is scheduled
       // CRM-6835
       $query = "
       SELECT   j.*
         FROM   $jobTable     j,
-           $mailingTable m
+           $broadcastTable m
        WHERE   m.id = j.voice_id AND m.domain_id = {$domainID}
-                     {$modeClause}
          AND   j.is_test = 0
          AND   ( ( j.start_date IS null
          AND       j.scheduled_date <= $currentTime
@@ -118,7 +115,7 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
 
     while ($job->fetch()) {
       // still use job level lock for each child job
-      $lockName = "civimail.job.{$job->id}";
+      $lockName = "civibroadcast.job.{$job->id}";
 
       $lock = new CRM_Core_Lock($lockName);
       if (!$lock->isAcquired()) {
@@ -127,9 +124,6 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
 
       // for test jobs we do not change anything, since its on a short-circuit path
       if (empty($testParams)) {
-        // we've got the lock, but while we were waiting and processing
-        // other emails, this job might have changed under us
-        // lets get the job status again and check
         $job->status = CRM_Core_DAO::getFieldValue(
           'CRM_VoiceBroadcast_DAO_VoiceBroadcastJob',
           $job->id,
@@ -167,14 +161,8 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
         $transaction->commit();
       }
 
-      // Get the mailer
-      // make it a persistent connection, CRM-9349
-      if ($mode === NULL) {
-        $mailer = $config->getMailer(TRUE);
-      }
-      elseif ($mode == 'sms') {
-        $mailer = CRM_SMS_Provider::singleton(array('voice_id' => $job->voice_id));
-      }
+      // Get the sender
+      
 
       // Compose and deliver each child job
       $isComplete = $job->deliver($mailer, $testParams);
@@ -286,25 +274,19 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
     $job = new CRM_VoiceBroadcast_DAO_VoiceBroadcastJob();
 
     $jobTable     = CRM_VoiceBroadcast_DAO_VoiceBroadcastJob::getTableName();
-    $mailingTable = CRM_VoiceBroadcast_DAO_VoiceBroadcast::getTableName();
+    $broadcastTable = CRM_VoiceBroadcast_DAO_VoiceBroadcast::getTableName();
 
     $currentTime = date('YmdHis');
 
-    $workflowClause = CRM_VoiceBroadcast_DAO_VoiceBroadcastJob::workflowClause();
-
     $domainID = CRM_Core_Config::domainID();
-
-    $modeClause = 'AND m.sms_provider_id IS NULL';
 
     // Select all the mailing jobs that are created from
     // when the mailing is submitted or scheduled.
     $query = "
     SELECT   j.*
       FROM   $jobTable     j,
-         $mailingTable m
+         $broadcastTable m
      WHERE   m.id = j.voice_id AND m.domain_id = {$domainID}
-                 $workflowClause
-                 $modeClause
        AND   j.is_test = 0
        AND   ( ( j.start_date IS null
        AND       j.scheduled_date <= $currentTime
@@ -322,7 +304,7 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
     // X Number of child jobs
     while ($job->fetch()) {
       // still use job level lock for each child job
-      $lockName = "civimail.job.{$job->id}";
+      $lockName = "civibroadcast.job.{$job->id}";
 
       $lock = new CRM_Core_Lock($lockName);
       if (!$lock->isAcquired()) {

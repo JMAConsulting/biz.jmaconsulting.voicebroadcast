@@ -55,136 +55,6 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
    * @return void
    */
   function setDefaultValues() {
-    $mailingID = CRM_Utils_Request::retrieve('mid', 'Integer', $this, FALSE, NULL);
-
-    //need to differentiate new/reuse mailing, CRM-2873
-    $reuseMailing = FALSE;
-    if ($mailingID) {
-      $reuseMailing = TRUE;
-    }
-    else {
-      $mailingID = $this->_mailingID;
-    }
-
-    $count = $this->get('count');
-    $this->assign('count', $count);
-
-    $defaults = array();
-
-    $htmlMessage = NULL;
-    if ($mailingID) {
-      $dao = new CRM_VoiceBroadcast_DAO_VoiceBroadcast();
-      $dao->id = $mailingID;
-      $dao->find(TRUE);
-      $dao->storeValues($dao, $defaults);
-
-      //we don't want to retrieve template details once it is
-      //set in session
-      $templateId = $this->get('template');
-      $this->assign('templateSelected', $templateId ? $templateId : 0);
-      if (isset($defaults['msg_template_id']) && !$templateId) {
-        $defaults['template'] = $defaults['msg_template_id'];
-        $messageTemplate = new CRM_Core_DAO_MessageTemplate();
-        $messageTemplate->id = $defaults['msg_template_id'];
-        $messageTemplate->selectAdd();
-        $messageTemplate->selectAdd('msg_text, msg_html');
-        $messageTemplate->find(TRUE);
-
-        $defaults['text_message'] = $messageTemplate->msg_text;
-        $htmlMessage = $messageTemplate->msg_html;
-      }
-
-      if (isset($defaults['body_text'])) {
-        $defaults['text_message'] = $defaults['body_text'];
-        $this->set('textFile', $defaults['body_text']);
-        $this->set('skipTextFile', TRUE);
-      }
-
-      if (isset($defaults['body_html'])) {
-        $htmlMessage = $defaults['body_html'];
-        $this->set('htmlFile', $defaults['body_html']);
-        $this->set('skipHtmlFile', TRUE);
-      }
-
-      //set default from email address.
-      if (!empty($defaults['from_name']) && !empty($defaults['from_email'])) {
-        $defaults['from_email_address'] = array_search('"' . $defaults['from_name'] . '" <' . $defaults['from_email'] . '>',
-          CRM_Core_OptionGroup::values('from_email_address')
-        );
-      }
-      else {
-        //get the default from email address.
-        $defaultAddress = CRM_Core_OptionGroup::values('from_email_address', NULL, NULL, NULL, ' AND is_default = 1');
-        foreach ($defaultAddress as $id => $value) {
-          $defaults['from_email_address'] = $id;
-        }
-      }
-
-      if (!empty($defaults['replyto_email'])) {
-        $replyToEmail = CRM_Core_OptionGroup::values('from_email_address');
-        foreach ($replyToEmail as $value) {
-          if (strstr($value, $defaults['replyto_email'])) {
-            $replyToEmailAddress = $value;
-            break;
-          }
-        }
-        $replyToEmailAddress = explode('<', $replyToEmailAddress);
-        if (count($replyToEmailAddress) > 1) {
-          $replyToEmailAddress = $replyToEmailAddress[0] . '<' . $replyToEmailAddress[1];
-        }
-        $defaults['reply_to_address'] = array_search($replyToEmailAddress, $replyToEmail);
-      }
-    }
-
-    //fix for CRM-2873
-    if (!$reuseMailing) {
-      $textFilePath = $this->get('textFilePath');
-      if ($textFilePath &&
-        file_exists($textFilePath)
-      ) {
-        $defaults['text_message'] = file_get_contents($textFilePath);
-        if (strlen($defaults['text_message']) > 0) {
-          $this->set('skipTextFile', TRUE);
-        }
-      }
-
-      $htmlFilePath = $this->get('htmlFilePath');
-      if ($htmlFilePath &&
-        file_exists($htmlFilePath)
-      ) {
-        $defaults['html_message'] = file_get_contents($htmlFilePath);
-        if (strlen($defaults['html_message']) > 0) {
-          $htmlMessage = $defaults['html_message'];
-          $this->set('skipHtmlFile', TRUE);
-        }
-      }
-    }
-
-    if ($this->get('html_message')) {
-      $htmlMessage = $this->get('html_message');
-    }
-
-    $htmlMessage = str_replace(array("\n", "\r"), ' ', $htmlMessage);
-    $htmlMessage = str_replace("'", "\'", $htmlMessage);
-    $this->assign('message_html', $htmlMessage);
-
-    $defaults['upload_type'] = 1;
-    if (isset($defaults['body_html'])) {
-      $defaults['html_message'] = $defaults['body_html'];
-    }
-
-    //CRM-4678 setdefault to default component when composing new mailing.
-    if (!$reuseMailing) {
-      $componentFields = array(
-        'header_id' => 'Header',
-        'footer_id' => 'Footer',
-      );
-      foreach ($componentFields as $componentVar => $componentType) {
-        $defaults[$componentVar] = CRM_Mailing_PseudoConstant::defaultComponent($componentType, '');
-      }
-    }
-
-    return $defaults;
   }
 
   /**
@@ -285,7 +155,11 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $ids['voice_id'] = $this->_mailingID;
 
     //get the sender phone number
-    $params['from_name'] = $this->_submitValues['phone_number'];
+    $params['from_number'] = $this->_submitValues['phone_number'];
+    $params['from_name'] = CRM_Contact_BAO_Contact::displayName($formValues['contact_id']);
+
+    // Enter the voice_id, from_number, contact_id in new table to lookup voice calls.
+    
 
 
     /* Build the voice broadcast object */
