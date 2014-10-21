@@ -112,7 +112,6 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
       $job->query($query);
     }
 
-
     while ($job->fetch()) {
       // still use job level lock for each child job
       $lockName = "civibroadcast.job.{$job->id}";
@@ -162,10 +161,12 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
       }
 
       // Get the sender
+      $mappingParams = array('voice_id' => $job->voice_id);
+      $mapping = CRM_VoiceBroadcast_BAO_VoiceBroadcastMapping::retrieve($mappingParams);
       
 
       // Compose and deliver each child job
-      $isComplete = $job->deliver($mailer, $testParams);
+      $isComplete = $job->deliver($mapping, $testParams);
 
       // Mark the child complete
       if ($isComplete) {
@@ -271,7 +272,7 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
    * @param null $mode
    */
   public static function runJobs_pre($offset = 200, $mode = NULL) {
-    $job = new CRM_VoiceBroadcast_DAO_VoiceBroadcastJob();
+    $job = new CRM_VoiceBroadcast_BAO_VoiceBroadcastJob();
 
     $jobTable     = CRM_VoiceBroadcast_DAO_VoiceBroadcastJob::getTableName();
     $broadcastTable = CRM_VoiceBroadcast_DAO_VoiceBroadcast::getTableName();
@@ -327,7 +328,6 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
       }
 
       $job->split_job($offset);
-
       // update the status of the parent job
       $transaction = new CRM_Core_Transaction();
 
@@ -446,7 +446,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
    * @return void
    * @access public
    */
-  public function deliver(&$mailer, $testParams = NULL) {
+  public function deliver(&$mapping, $testParams = NULL) {
     $mailing = new CRM_VoiceBroadcast_BAO_VoiceBroadcast();
     $mailing->id = $this->voice_id;
     $mailing->find(TRUE);
@@ -460,21 +460,19 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     $edTable      = CRM_VoiceBroadcast_Event_BAO_Delivered::getTableName();
 
     $query = "  SELECT      $eqTable.id,
-                                $emailTable.email as email,
                                 $eqTable.contact_id,
                                 $eqTable.hash,
-                                NULL as phone
+                                $phoneTable.phone as phone
                     FROM        $eqTable
-                    INNER JOIN  $emailTable
-                            ON  $eqTable.email_id = $emailTable.id
+                    INNER JOIN  $phoneTable
+                            ON  $eqTable.phone_id = $phoneTable.id
                     INNER JOIN  $contactTable
-                            ON  $contactTable.id = $emailTable.contact_id
+                            ON  $contactTable.id = $phoneTable.contact_id
                     LEFT JOIN   $edTable
                             ON  $eqTable.id = $edTable.event_queue_id
                     WHERE       $eqTable.job_id = " . $this->id . "
                         AND     $edTable.id IS null
                         AND    $contactTable.is_opt_out = 0";
-
     $eq->query($query);
 
     static $config = NULL;
@@ -487,12 +485,12 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     $job_date = CRM_Utils_Date::isoToMysql($this->scheduled_date);
     $fields = array();
 
-    if (!empty($testParams)) {
-      $mailing->subject = ts('[CiviMail Draft]') . ' ' . $mailing->subject;
-    }
-
     // get and format attachments
     $attachments = CRM_Core_BAO_File::getEntityFile('civicrm_voicebroadcast', $mailing->id);
+    // Create XML file to be sent to Plivo
+    $attachments = CRM_VoiceBroadcast_BAO_VoiceBroadcast::createXML($attachments, $mailing->id);
+    print_r($attachments );
+    exit;
 
     // CRM-12376
     // This handles the edge case scenario where all the mails
@@ -510,7 +508,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         $mailsProcessed >= $config->mailerBatchLimit
       ) {
         if (!empty($fields)) {
-          $this->deliverGroup($fields, $mailing, $mailer, $job_date, $attachments);
+          $this->deliverGroup($fields, $mailing, $mapping, $job_date, $attachments);
         }
         $eq->free();
         return FALSE;
@@ -525,7 +523,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         'phone' => $eq->phone,
       );
       if (count($fields) == self::MAX_CONTACTS_TO_PROCESS) {
-        $isDelivered = $this->deliverGroup($fields, $mailing, $mailer, $job_date, $attachments);
+        $isDelivered = $this->deliverGroup($fields, $mailing, $mapping, $job_date, $attachments);
         if (!$isDelivered) {
           $eq->free();
           return $isDelivered;
@@ -537,7 +535,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     $eq->free();
 
     if (!empty($fields)) {
-      $isDelivered = $this->deliverGroup($fields, $mailing, $mailer, $job_date, $attachments);
+      $isDelivered = $this->deliverGroup($fields, $mailing, $mapping, $job_date, $attachments);
     }
     return $isDelivered;
   }
@@ -552,139 +550,57 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
    * @return bool|null
    * @throws Exception
    */
-  public function deliverGroup(&$fields, &$mailing, &$mailer, &$job_date, &$attachments) {
-    static $smtpConnectionErrors = 0;
-
-    if (!is_object($mailer) || empty($fields)) {
+  public function deliverGroup(&$fields, &$mailing, &$mapping, &$job_date, &$attachments) {
+    if (empty($fields)) {
       CRM_Core_Error::fatal();
     }
+      CRM_Core_Error::debug( '$mapping', $mapping );
 
+      CRM_Core_Error::debug( '$fields', $fields );
+      exit;
     // get the return properties
     $returnProperties = $mailing->getReturnProperties();
     $params           = $targetParams = $deliveredParams = array();
     $count            = 0;
 
-    foreach ($fields as $key => $field) {
-      $params[] = $field['contact_id'];
-    }
-
-    $details = CRM_Utils_Token::getTokenDetails(
-      $params,
-      $returnProperties,
-      TRUE, TRUE, NULL,
-      $mailing->getFlattenedTokens(),
-      get_class($this),
-      $this->id
-    );
-
     $config = CRM_Core_Config::singleton();
     foreach ($fields as $key => $field) {
       $contactID = $field['contact_id'];
-      if (!array_key_exists($contactID, $details[0])) {
-        $details[0][$contactID] = array();
-      }
 
-      /* Compose the mailing */
-      $recipient = $replyToEmail = NULL;
-      $replyValue = strcmp($mailing->replyto_email, $mailing->from_email);
-      if ($replyValue) {
-        $replyToEmail = $mailing->replyto_email;
-      }
-
-      $message = &$mailing->compose(
-        $this->id, $field['id'], $field['hash'],
-        $field['contact_id'], $field['email'],
-        $recipient, FALSE, $details[0][$contactID], $attachments,
-        FALSE, NULL, $replyToEmail
+      /* Send the voice broadcast */
+      $voiceParams = array(
+        'to' => $field['phone'],
+        'from' => $mapping['from_number'],
       );
-      if (empty($message)) {
-        // lets keep the message in the queue
-        // most likely a permissions related issue with smarty templates
-        // or a bad contact id? CRM-9833
-        continue;
-      }
 
-      /* Send the mailing */
 
-      $body = &$message->get();
-      $headers = &$message->headers();
+      /* Register the delivery event */
+      $deliveredParams[] = $field['id'];
+      $targetParams[] = $field['contact_id'];
 
-      // make $recipient actually be the *encoded* header, so as not to baffle Mail_RFC822, CRM-5743
-      $recipient = $headers['To'];
-      $result = NULL;
+      $count++;
+      if ($count % CRM_Core_DAO::BULK_MAIL_INSERT_COUNT == 0) {
+        $this->writeToDB(
+          $deliveredParams,
+          $targetParams,
+          $mailing,
+          $job_date
+        );
+        $count = 0;
 
-      // disable error reporting on real mailings (but leave error reporting for tests), CRM-5744
-      if ($job_date) {
-        $errorScope = CRM_Core_TemporaryErrorScope::ignoreException();
-      }
+        // hack to stop mailing job at run time, CRM-4246.
+        // to avoid making too many DB calls for this rare case
+        // lets do it when we snapshot
+        $status = CRM_Core_DAO::getFieldValue(
+                                              'CRM_Mailing_DAO_MailingJob',
+                                              $this->id,
+                                              'status',
+                                              'id',
+                                              TRUE
+                                              );
 
-      $result = $mailer->send($recipient, $headers, $body, $this->id);
-
-      if ($job_date) {
-        unset($errorScope);
-      }
-
-      // FIXME: for now we skipping bounce handling for sms
-      if (is_a($result, 'PEAR_Error') && !$mailing->sms_provider_id) {
-        // CRM-9191
-        $message = $result->getMessage();
-        if (
-          strpos($message, 'Failed to write to socket') !== FALSE ||
-          strpos($message, 'Failed to set sender') !== FALSE
-        ) {
-          // lets log this message and code
-          $code = $result->getCode();
-          CRM_Core_Error::debug_log_message("SMTP Socket Error or failed to set sender error. Message: $message, Code: $code");
-
-          // these are socket write errors which most likely means smtp connection errors
-          // lets skip them
-          $smtpConnectionErrors++;
-          if ($smtpConnectionErrors <= 5) {
-            continue;
-          }
-
-          // seems like we have too many of them in a row, we should
-          // write stuff to disk and abort the cron job
-          $this->writeToDB(
-            $deliveredParams,
-            $targetParams,
-            $mailing,
-            $job_date
-          );
-
-          CRM_Core_Error::debug_log_message("Too many SMTP Socket Errors. Exiting");
-          CRM_Utils_System::civiExit();
-        }
-      }
-      else {
-        /* Register the delivery event */
-        $deliveredParams[] = $field['id'];
-        $targetParams[] = $field['contact_id'];
-
-        $count++;
-        if ($count % CRM_Core_DAO::BULK_MAIL_INSERT_COUNT == 0) {
-          $this->writeToDB(
-            $deliveredParams,
-            $targetParams,
-            $mailing,
-            $job_date
-          );
-          $count = 0;
-
-          // hack to stop mailing job at run time, CRM-4246.
-          // to avoid making too many DB calls for this rare case
-          // lets do it when we snapshot
-          $status = CRM_Core_DAO::getFieldValue(
-            'CRM_Mailing_DAO_MailingJob',
-            $this->id,
-            'status',
-            'id',
-            TRUE
-          );
-
-          if ($status != 'Running') {
-            return FALSE;
-          }
+        if ($status != 'Running') {
+          return FALSE;
         }
       }
 
@@ -754,7 +670,7 @@ AND    status IN ( 'Scheduled', 'Running', 'Paused' )
       );
       CRM_Core_DAO::executeQuery($sql, $params);
 
-      CRM_Core_Session::setStatus(ts('The mailing has been canceled.'), ts('Canceled'), 'success');
+      CRM_Core_Session::setStatus(ts('The voice broadcast has been canceled.'), ts('Canceled'), 'success');
     }
   }
 

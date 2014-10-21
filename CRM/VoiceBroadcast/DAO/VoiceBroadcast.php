@@ -112,6 +112,12 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
    */
   public $from_name;
   /**
+   * From Header of mailing
+   *
+   * @var string
+   */
+  public $from_number;
+  /**
    * Subject of mailing
    *
    * @var string
@@ -288,6 +294,16 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
             'type' => 'Text',
           ) ,
         ) ,
+        'from_number' => array(
+          'name' => 'from_number',
+          'type' => CRM_Utils_Type::T_STRING,
+          'title' => ts('From Number') ,
+          'maxlength' => 60,
+          'size' => CRM_Utils_Type::HUGE,
+          'html' => array(
+            'type' => 'Text',
+          ) ,
+        ) ,
         'subject' => array(
           'name' => 'subject',
           'type' => CRM_Utils_Type::T_STRING,
@@ -439,7 +455,7 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
         'domain_id' => 'domain_id',
         'name' => 'name',
         'from_name' => 'from_name',
-        'from_email' => 'from_email',
+        'from_number' => 'from_number',
         'subject' => 'subject',
         'is_completed' => 'is_completed',
         'created_id' => 'created_id',
