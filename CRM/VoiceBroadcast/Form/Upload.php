@@ -159,8 +159,14 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $params['from_name'] = CRM_Contact_BAO_Contact::displayName($formValues['contact_id']);
 
     // Enter the voice_id, from_number, contact_id in new table to lookup voice calls.
-    
-
+    $mapping = new CRM_VoiceBroadcast_DAO_VoiceBroadcastMapping();
+    $mapping->voice_id = $this->_mailingID;
+    $mapping->find();
+    $mapping->fetch();
+    $mapping->contact_id = $formValues['contact_id'];
+    $mapping->from_number = $params['from_number'];
+    $mapping->save();
+    $mapping->free();
 
     /* Build the voice broadcast object */
 

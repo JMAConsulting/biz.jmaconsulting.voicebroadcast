@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <menu>
   <item>
-    <path>civicrm/testvoice</path>
-    <page_callback>CRM_Voice_Page_Greeter</page_callback>
-    <title>Greeter</title>
+    <path>civicrm/voicebroadcast/plivo</path>
+    <page_callback>CRM_VoiceBroadcast_Form_Plivo</page_callback>
+    <title>Configure CiviCRM-Plivo Integration</title>
     <access_arguments>access CiviCRM</access_arguments>
   </item>
   <item>
@@ -36,5 +36,4 @@
     <page_type>1</page_type>
     <weight>620</weight>
   </item>
-
 </menu>

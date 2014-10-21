@@ -1,6 +1,4 @@
 <?php
-// $Id$
-
 /*
  +--------------------------------------------------------------------+
  | CiviCRM version 4.5                                                |
@@ -28,32 +26,43 @@
 */
 
 /**
- * new version of civicrm apis. See blog post at
- * http://civicrm.org/node/131
- * @todo Write sth
  *
- * @package CiviCRM_APIv3
- * @subpackage API_Job
+ * @package CRM
  * @copyright CiviCRM LLC (c) 2004-2014
- * $Id: Contact.php 30879 2010-11-22 15:45:55Z shot $
+ * $Id$
  *
  */
-
 
 /**
- * Process scheduled voice broadcasts
- *
- * @param array $params
- *
- * @return array
+ * Class CRM_Mailing_BAO_MailingJob
  */
-function civicrm_api3_job_process_broadcast($params) {
+class CRM_VoiceBroadcast_BAO_VoiceBroadcastMapping extends CRM_VoiceBroadcast_DAO_VoiceBroadcastMapping {
 
-  if (!CRM_VoiceBroadcast_BAO_VoiceBroadcast::processQueue()) {
-    return civicrm_api3_create_error('Process VoiceBroadcast failed');
+  /**
+   * class constructor
+   */
+  function __construct() {
+    parent::__construct();
   }
-  else {
-    $values = array();
-    return civicrm_api3_create_success($values, $params, 'broadcast', 'process');
+
+  /**
+   * @param $params
+   *
+   * @return CRM_Mailing_BAO_MailingJob
+   */
+  static public function create($params) {
+    $mapping = new CRM_VoiceBroadcast_BAO_VoiceBroadcastMapping();
+    $mapping->copyValues($params);
+    $mapping->save();
+    return $mapping;
+  }
+
+  static public function retrieve($params) {
+    $mapping = new CRM_VoiceBroadcast_BAO_VoiceBroadcastMapping();
+    $mapping->copyValues($params);
+    $mapping->find();
+    $mapping->fetch();
+    return $mapping;
   }
 }
+
