@@ -9,15 +9,19 @@ require_once 'CRM/Core/Form.php';
  */
 class CRM_VoiceBroadcast_Form_Plivo extends CRM_Core_Form {
   function buildQuickForm() {
+    $config = CRM_Core_Config::singleton();
 
     $this->add('text', "auth_id", ts('Plivo Auth ID'), array(
-      'size' => 30, 'maxlength' => 60)
+      'size' => 60), TRUE
     );
-    $this->add('text', "auth_token", ts('Plivo Auth Token'), array(
-      'size' => 30, 'maxlength' => 60)
+    $this->add('password', "auth_token", ts('Plivo Auth Token'), array(
+      'size' => 60), TRUE
     );
     $this->add('text', "voice_dir", ts('Directory in which voice files will be stored'), array(
-      'size' => 30, 'maxlength' => 60)
+      'size' => 60), TRUE
+    ); 
+    $this->add('text', "voice_url", ts('URL to the directory'), array(
+      'size' => 60), TRUE
     ); 
     $this->addRule('voice_dir',
       ts("The specified directory does not exist"),
@@ -30,14 +34,32 @@ class CRM_VoiceBroadcast_Form_Plivo extends CRM_Core_Form {
         'isDefault' => TRUE,
       ),
     ));
+    $this->setDefaults(array('voice_url' => $config->userFrameworkBaseURL));
 
+    $this->addFormRule(array('CRM_VoiceBroadcast_Form_Plivo', 'formRule'));
     // export form elements
     $this->assign('elementNames', $this->getRenderableElementNames());
     parent::buildQuickForm();
   }
 
+  function setDefaultValues() {
+    CRM_Core_Error::debug( '$fields', $this );
+    exit;
+  }
+  
+  static function formRule($fields) {
+    $errors = array();
+    if (!is_writable($fields['voice_dir'])) {
+      $errors['voice_dir'] = ts('The directory you have specified is not writable!');
+    }
+    return $errors;
+  }
+
   function postProcess() {
     $values = $this->exportValues();
+    $plivo = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
+    $plivo->copyValues($values);
+    $plivo->save();
     parent::postProcess();
   }
 

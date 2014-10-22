@@ -1847,7 +1847,6 @@ LEFT JOIN civicrm_mailing_group g ON g.voice_id   = m.id
    */
   public function &getRows($offset, $rowCount, $sort, $additionalClause = NULL, $additionalParams = NULL) {
     $mailing = self::getTableName();
-    CRM_Core_Error::debug( '$additionalClause', $additionalClause );
     $job     = CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::getTableName();
     $group   = CRM_VoiceBroadcast_DAO_VoiceBroadcastGroup::getTableName();
     $session = CRM_Core_Session::singleton();
@@ -2046,7 +2045,10 @@ ORDER BY civicrm_mailing.name";
     require_once 'packages/plivo.php';
     $file = reset($attachments);
     $name = 'Voice_' . $id . '.xml';
-    $dir = CRM_Core_Config::singleton()->customFileUploadDir . $name;
+    $plivo = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
+    $plivo->find();
+    $plivo->fetch();
+    $dir = $plivo->voice_dir . $name;
     $r = new Response();
 
     $url =  (string)'http://localhost' . htmlspecialchars_decode($file['url']);
@@ -2064,6 +2066,7 @@ ORDER BY civicrm_mailing.name";
     header('Content-type: text/xml');
     $w = $r->toXML();
     file_put_contents($dir, $w);
-    return $name;
+    header('Content-type: text/html');
+    return $plivo->voice_url . $name;
   }
 }

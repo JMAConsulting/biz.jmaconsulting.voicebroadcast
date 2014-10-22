@@ -165,7 +165,7 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
 
     $params['visibility'] = $this->controller->exportvalue($this->_name, 'visibility');
 
-    $ids['voice_id'] = $this->get('mailing_id');
+    $ids['voice_id'] = $this->get('voice_id');
 
     // update voicebroadcast
     CRM_VoiceBroadcast_BAO_VoiceBroadcast::create($params, $ids);
