@@ -316,9 +316,6 @@ LEFT JOIN  civicrm_contact scheduledContact ON ( $mailing.scheduled_id = schedul
     }
     $rows = &$mailing->getRows($offset, $rowCount, $sort, $whereClause, $params);
 
-    //get the search base mailing Ids, CRM-3711.
-    $searchMailings = $mailing->searchMailingIDs();
-
     //check for delete CRM-4418
     $allowToDelete = CRM_Core_Permission::check('delete in CiviMail');
 
@@ -343,12 +340,6 @@ LEFT JOIN  civicrm_contact scheduledContact ON ( $mailing.scheduled_id = schedul
         if (!($row['status'] == 'Not scheduled')) {
           if ($allAccess || $showCreateLinks) {
             $actionMask = CRM_Core_Action::VIEW;
-          }
-
-          if (!in_array($row['id'], $searchMailings)) {
-            if ($allAccess || $showCreateLinks) {
-              $actionMask |= CRM_Core_Action::UPDATE;
-            }
           }
         }
         else {

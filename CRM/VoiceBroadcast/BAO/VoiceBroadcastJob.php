@@ -488,9 +488,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     // get and format attachments
     $attachments = CRM_Core_BAO_File::getEntityFile('civicrm_voicebroadcast', $mailing->id);
     // Create XML file to be sent to Plivo
-    $attachments = CRM_VoiceBroadcast_BAO_VoiceBroadcast::createXML($attachments, $mailing->id);
-    print_r($attachments );
-    exit;
+    $xml = CRM_VoiceBroadcast_BAO_VoiceBroadcast::createXML($attachments, $mailing->id);
 
     // CRM-12376
     // This handles the edge case scenario where all the mails
@@ -508,7 +506,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         $mailsProcessed >= $config->mailerBatchLimit
       ) {
         if (!empty($fields)) {
-          $this->deliverGroup($fields, $mailing, $mapping, $job_date, $attachments);
+          $this->deliverGroup($fields, $mailing, $mapping, $job_date, $xml);
         }
         $eq->free();
         return FALSE;
@@ -523,7 +521,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         'phone' => $eq->phone,
       );
       if (count($fields) == self::MAX_CONTACTS_TO_PROCESS) {
-        $isDelivered = $this->deliverGroup($fields, $mailing, $mapping, $job_date, $attachments);
+        $isDelivered = $this->deliverGroup($fields, $mailing, $mapping, $job_date, $xml);
         if (!$isDelivered) {
           $eq->free();
           return $isDelivered;
@@ -535,7 +533,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     $eq->free();
 
     if (!empty($fields)) {
-      $isDelivered = $this->deliverGroup($fields, $mailing, $mapping, $job_date, $attachments);
+      $isDelivered = $this->deliverGroup($fields, $mailing, $mapping, $job_date, $xml);
     }
     return $isDelivered;
   }
@@ -550,16 +548,10 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
    * @return bool|null
    * @throws Exception
    */
-  public function deliverGroup(&$fields, &$mailing, &$mapping, &$job_date, &$attachments) {
+  public function deliverGroup(&$fields, &$mailing, &$mapping, &$job_date, &$xml) {
     if (empty($fields)) {
       CRM_Core_Error::fatal();
     }
-      CRM_Core_Error::debug( '$mapping', $mapping );
-
-      CRM_Core_Error::debug( '$fields', $fields );
-      exit;
-    // get the return properties
-    $returnProperties = $mailing->getReturnProperties();
     $params           = $targetParams = $deliveredParams = array();
     $count            = 0;
 
@@ -570,8 +562,11 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
       /* Send the voice broadcast */
       $voiceParams = array(
         'to' => $field['phone'],
-        'from' => $mapping['from_number'],
+        'from' => $mapping->from_number,
+        'answer_uri' => $xml,
+        'hangup_uri' => CRM_Utils_System::url('civicrm/plivo/hangup', NULL, TRUE),
       );
+      // TODO: Send to Plivo's API
 
 
       /* Register the delivery event */
