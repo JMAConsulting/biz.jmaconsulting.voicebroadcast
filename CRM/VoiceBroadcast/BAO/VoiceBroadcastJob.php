@@ -210,7 +210,6 @@ class CRM_VoiceBroadcast_BAO_VoiceBroadcastJob extends CRM_VoiceBroadcast_DAO_Vo
     $mailingTable = CRM_VoiceBroadcast_DAO_VoiceBroadcast::getTableName();
 
     $currentTime = date('YmdHis');
-    $mailingACL  = CRM_VoiceBroadcast_DAO_VoiceBroadcast::mailingACL('m');
     $domainID    = CRM_Core_Config::domainID();
 
     $query = "
@@ -517,7 +516,6 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         'id' => $eq->id,
         'hash' => $eq->hash,
         'contact_id' => $eq->contact_id,
-        'email' => $eq->email,
         'phone' => $eq->phone,
       );
       if (count($fields) == self::MAX_CONTACTS_TO_PROCESS) {
@@ -554,6 +552,14 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     }
     $params           = $targetParams = $deliveredParams = array();
     $count            = 0;
+    require_once 'packages/plivo.php';
+    $plivo = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
+    $plivo->find(TRUE);
+    $plivo->fetch();
+    $authID = $plivo->auth_id;
+    $authToken = $plivo->auth_token;
+
+    $plivoAPI = new RestAPI($authID, $authToken);
 
     $config = CRM_Core_Config::singleton();
     foreach ($fields as $key => $field) {
@@ -563,11 +569,27 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
       $voiceParams = array(
         'to' => $field['phone'],
         'from' => $mapping->from_number,
-        'answer_uri' => $xml,
+        'answer_url' => $xml,
         'hangup_uri' => CRM_Utils_System::url('civicrm/plivo/hangup', NULL, TRUE),
       );
-      // TODO: Send to Plivo's API
-
+      $response = $plivoAPI->make_call($voiceParams);
+      if (CRM_Utils_Array::value('request_uuid', $response['response'])) {
+        $logs[$field['id']] = $response['response']['request_uuid'];
+        // Get the request UUID and save it for later
+        $lookupP = array(
+          'voice_id' => $this->id,
+          'contact_id' => $mapping->contact_id,
+          'from_number' => $mapping->from_number,
+          'to_number' => $field['phone'],
+          'to_contact' => $field['contact_id'],
+          'request_uuid' => $response['response']['request_uuid'],
+        );
+        $lookup = new CRM_VoiceBroadcast_DAO_VoiceBroadcastLookup();
+        $lookup->copyValues($lookupP);
+        $lookup->save();
+        $lookup->free();
+      }
+      
 
       /* Register the delivery event */
       $deliveredParams[] = $field['id'];
@@ -587,7 +609,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         // to avoid making too many DB calls for this rare case
         // lets do it when we snapshot
         $status = CRM_Core_DAO::getFieldValue(
-                                              'CRM_Mailing_DAO_MailingJob',
+                                              'CRM_VoiceBroadcast_DAO_VoiceBroadcastJob',
                                               $this->id,
                                               'status',
                                               'id',
@@ -600,12 +622,6 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
       }
 
       unset($result);
-
-      // seems like a successful delivery or bounce, lets decrement error count
-      // only if we have smtp connection errors
-      if ($smtpConnectionErrors > 0) {
-        $smtpConnectionErrors--;
-      }
 
       // If we have enabled the Throttle option, this is the time to enforce it.
       if (isset($config->mailThrottleTime) && $config->mailThrottleTime > 0) {
@@ -726,11 +742,12 @@ AND    status IN ( 'Scheduled', 'Running', 'Paused' )
    * @throws CRM_Core_Exception
    * @throws Exception
    */
-  public function writeToDB(
+  public static function writeToDB(
     &$deliveredParams,
     &$targetParams,
     &$mailing,
-    $job_date
+    $job_date, 
+    $desc = NULL
   ) {
     static $activityTypeID = NULL;
     static $writeActivity = NULL;
@@ -758,24 +775,41 @@ AND    status IN ( 'Scheduled', 'Running', 'Paused' )
       if (!$activityTypeID) {
         $activityTypeID = CRM_Core_OptionGroup::getValue(
           'activity_type',
-          'Bulk Email',
+          'Voice Broadcast',
           'name'
         );
         if (!$activityTypeID) {
           CRM_Core_Error::fatal();
         }
       }
+      // Check if logging is active then only record the activity
+      
+      $details = '';
+      if (!empty($desc)) {
+        if ($mailing->is_track_call_disposition) {
+          $details .= "<p><b>Call Disposition:</b> $desc->call_status </p><br/>";
+        }
+        if ($mailing->is_track_call_duration) {
+          $details .= "<p><b>Call Duration:</b> $desc->duration </p><br/>";
+        }
+        if ($mailing->is_track_call_cost) {
+          $details .= "<p><b>Call Cost:</b> $desc->total_cost </p><br/>";
+        }
+        $details .= "<p><b>From:</b> $desc->from </p><br/><p><b>To:</b> $desc->to </p><br/>
+          <p><b>Start Time:</b> $desc->start_time </p><br/><p><b>End Time:</b> $desc->end_time </p><br/>";
+      }
 
       $activity = array(
         'source_contact_id' => $mailing->scheduled_id,
         'target_contact_id' => array_unique($targetParams),
         'activity_type_id' => $activityTypeID,
-        'source_record_id' => $this->voice_id,
+        'source_record_id' => $mailing->id,
         'activity_date_time' => $job_date,
-        'subject' => $mailing->subject,
+        'subject' => 'Voice Broadcast Call from '. $mailing->from_name,
         'status_id' => 2,
         'deleteActivityTarget' => FALSE,
         'campaign_id' => $mailing->campaign_id,
+        'details' => $details,
       );
 
       //check whether activity is already created for this mailing.
@@ -789,7 +823,7 @@ AND    civicrm_activity.source_record_id = %2
 
       $queryParams = array(
         1 => array($activityTypeID, 'Integer'),
-        2 => array($this->voice_id, 'Integer'),
+        2 => array($mailing->id, 'Integer'),
       );
       $activityID = CRM_Core_DAO::singleValueQuery($query, $queryParams);
 
