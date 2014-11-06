@@ -140,7 +140,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     
     $fileTypes = CRM_Core_OptionGroup::values('file_type', TRUE); // This is needed for an exact match on duplicate voice broadcasts
     
-    // Add voice files to mailing
+    // Add voice files to broadcast
     CRM_Core_BAO_File::filePostProcess(
       $formValues[$fileType]['name'],
       $fileTypes['Voice File'],
