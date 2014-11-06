@@ -1936,20 +1936,20 @@ LEFT JOIN civicrm_mailing_group g ON g.voice_id   = m.id
       CRM_Core_Error::fatal();
     }
 
-    CRM_Utils_Hook::pre('delete', 'Mailing', $id, CRM_Core_DAO::$_nullArray);
+    CRM_Utils_Hook::pre('delete', 'VoiceBroadcast', $id, CRM_Core_DAO::$_nullArray);
 
     // delete all file attachments
-    CRM_Core_BAO_File::deleteEntityFile('civicrm_mailing',
+    CRM_Core_BAO_File::deleteEntityFile('civicrm_voicebroadcast',
       $id
     );
 
-    $dao = new CRM_Mailing_DAO_Mailing();
+    $dao = new CRM_VoiceBroadcast_DAO_VoiceBroadcast();
     $dao->id = $id;
     $dao->delete();
 
-    CRM_Core_Session::setStatus(ts('Selected mailing has been deleted.'), ts('Deleted'), 'success');
+    CRM_Core_Session::setStatus(ts('Selected Voicebroadcast has been deleted.'), ts('Deleted'), 'success');
 
-    CRM_Utils_Hook::post('delete', 'Mailing', $id, $dao);
+    CRM_Utils_Hook::post('delete', 'VoiceBroadcast', $id, $dao);
   }
 
   /**
@@ -1989,7 +1989,6 @@ LEFT JOIN civicrm_mailing_group g ON g.voice_id   = m.id
     // Split up the parent jobs into multiple child jobs
     CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::runJobs_pre(NULL, $mode);
     CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::runJobs(NULL, $mode);
-    exit;
     CRM_VoiceBroadcast_BAO_VoiceBroadcastJob::runJobs_post($mode);
 
     // lets release the global cron lock if we do have one
@@ -2045,13 +2044,11 @@ ORDER BY civicrm_mailing.name";
     require_once 'packages/plivo.php';
     $file = reset($attachments);
     $name = 'Voice_' . $id . '.xml';
-    $plivo = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
-    $plivo->find();
-    $plivo->fetch();
-    $dir = $plivo->voice_dir . $name;
+    $config = CRM_Core_Config::singleton();
+    $dir = $config->uploadDir . $name;
     $r = new Response();
 
-    $url =  (string)'http://localhost' . htmlspecialchars_decode($file['url']);
+    $url =  'http://' . htmlspecialchars_decode($file['url']);
     $attributes = array (
       'loop' => 2,
     );
@@ -2067,6 +2064,25 @@ ORDER BY civicrm_mailing.name";
     $w = $r->toXML();
     file_put_contents($dir, $w);
     header('Content-type: text/html');
-    return $plivo->voice_url . $name;
+    // Add Entity file
+    $fileTypes = CRM_Core_OptionGroup::values('file_type', TRUE); // This is needed for an exact match on duplicate voice broadcasts
+    CRM_Core_BAO_File::filePostProcess(
+      $dir,
+      $fileTypes['XML File'],
+      'civicrm_voicebroadcast',
+      $id,
+      NULL,
+      TRUE,
+      NULL,
+      'xmlFile',
+      'text/xml'
+    );   
+    $fileID = CRM_Core_DAO::singleValueQuery("SELECT id from civicrm_file WHERE uri = '{$name}' AND mime_type = 'text/xml'");
+    $xmlUrl = CRM_Utils_System::url('civicrm/file',
+            "reset=1&id=$fileID&eid=$id",
+            TRUE, NULL, TRUE, TRUE
+          );
+    return htmlspecialchars_decode($xmlUrl);
   }
+
 }

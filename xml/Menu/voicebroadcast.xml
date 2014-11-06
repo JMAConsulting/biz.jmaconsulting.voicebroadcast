@@ -38,7 +38,7 @@
   </item>
   <item>
     <path>civicrm/plivo/hangup</path>
-    <page_callback>CRM_Voicebroadcast_Page_Hangup</page_callback>
+    <page_callback>CRM_VoiceBroadcast_Page_Hangup</page_callback>
     <title>Hangup</title>
     <access_arguments>access CiviCRM</access_arguments>
   </item>
