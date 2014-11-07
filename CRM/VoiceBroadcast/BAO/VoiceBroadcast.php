@@ -2045,10 +2045,11 @@ ORDER BY civicrm_mailing.name";
     $file = reset($attachments);
     $name = 'Voice_' . $id . '.xml';
     $config = CRM_Core_Config::singleton();
+
     $dir = $config->uploadDir . $name;
     $r = new Response();
 
-    $url =  'http://' . htmlspecialchars_decode($file['url']);
+    $url =  $config->userFrameworkBaseURL . htmlspecialchars_decode($file['url']);
     $attributes = array (
       'loop' => 2,
     );
