@@ -2043,13 +2043,18 @@ ORDER BY civicrm_mailing.name";
   static public function createXML($attachments, $id) {
     require_once 'packages/plivo.php';
     $file = reset($attachments);
+    // Move the voice file to another directory
+    $dirs = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
+    $dirs->find();
+    $dirs->fetch();
+    $newDir = rename($file['fullPath'], $dirs->voice_dir.$file['cleanName']);
     $name = 'Voice_' . $id . '.xml';
     $config = CRM_Core_Config::singleton();
 
     $dir = $config->uploadDir . $name;
     $r = new Response();
 
-    $url =  $config->userFrameworkBaseURL . htmlspecialchars_decode($file['url']);
+    $url =  $dirs->voice_url . '/' . $file['cleanName'];
     $attributes = array (
       'loop' => 2,
     );
