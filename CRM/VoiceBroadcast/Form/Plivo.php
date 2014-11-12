@@ -17,16 +17,16 @@ class CRM_VoiceBroadcast_Form_Plivo extends CRM_Core_Form {
     $this->add('password', "auth_token", ts('Plivo Auth Token'), array(
       'size' => 60), TRUE
     );
-    /* $this->add('text', "voice_dir", ts('Directory in which voice files will be stored'), array( */
-    /*   'size' => 60), TRUE */
-    /* );  */
-    /* $this->add('text', "voice_url", ts('URL to the directory'), array( */
-    /*   'size' => 60), TRUE */
-    /* );  */
-    /* $this->addRule('voice_dir', */
-    /*   ts("The specified directory does not exist"), */
-    /*   'fileExists' */
-    /* ); */
+    $this->add('text', "voice_dir", ts('Directory in which voice files will be stored'), array(
+      'size' => 60), TRUE
+    );
+    $this->add('text', "voice_url", ts('URL to the directory'), array(
+      'size' => 60), TRUE
+    );
+    $this->addRule('voice_dir',
+      ts("The specified directory does not exist"),
+      'fileExists'
+    );
     $this->addButtons(array(
       array(
         'type' => 'submit',
@@ -43,13 +43,13 @@ class CRM_VoiceBroadcast_Form_Plivo extends CRM_Core_Form {
       $defaults = array(
         'auth_id' => $plivo->auth_id,
         'auth_token' => $plivo->auth_token,
-        /* 'voice_dir' => $plivo->voice_dir, */
-        /* 'voice_url' => $plivo->voice_url, */
+        'voice_dir' => $plivo->voice_dir,
+        'voice_url' => $plivo->voice_url,
       );
     } 
-    /* else { */
-    /*   $defaults = array('voice_url' => $config->userFrameworkBaseURL); */
-    /* } */
+    else {
+      $defaults = array('voice_url' => $config->userFrameworkBaseURL);
+    }
     
     $this->setDefaults($defaults);
 
@@ -61,9 +61,9 @@ class CRM_VoiceBroadcast_Form_Plivo extends CRM_Core_Form {
 
   static function formRule($fields) {
     $errors = array();
-    /* if (!is_writable($fields['voice_dir'])) { */
-    /*   $errors['voice_dir'] = ts('The directory you have specified is not writable!'); */
-    /* } */
+    if (!is_writable($fields['voice_dir'])) {
+      $errors['voice_dir'] = ts('The directory you have specified is not writable!');
+    }
     return $errors;
   }
 
