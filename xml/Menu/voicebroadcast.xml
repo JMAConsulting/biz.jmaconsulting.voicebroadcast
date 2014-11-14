@@ -40,6 +40,7 @@
     <path>civicrm/plivo/hangup</path>
     <page_callback>CRM_VoiceBroadcast_Page_Hangup</page_callback>
     <title>Hangup</title>
-    <access_arguments>access CiviCRM</access_arguments>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
   </item>
 </menu>

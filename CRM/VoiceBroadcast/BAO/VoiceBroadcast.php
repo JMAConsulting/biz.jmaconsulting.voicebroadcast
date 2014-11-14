@@ -2047,14 +2047,14 @@ ORDER BY civicrm_mailing.name";
     $dirs = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
     $dirs->find();
     $dirs->fetch();
-    $newDir = rename($file['fullPath'], $dirs->voice_dir.$file['cleanName']);
+    $newDir = rename($file['fullPath'] , $dirs->voice_dir.$file['fileName']);
     $name = 'Voice_' . $id . '.xml';
     $config = CRM_Core_Config::singleton();
 
     $dir = $config->uploadDir . $name;
     $r = new Response();
 
-    $url =  $dirs->voice_url . '/' . $file['cleanName'];
+    $url =  $dirs->voice_url . '/' . $file['fileName'];
     $attributes = array (
       'loop' => 2,
     );
@@ -2064,7 +2064,7 @@ ORDER BY civicrm_mailing.name";
     $wait_attribute = array(
       'length' => 3,
     );
-    $r->addWait($wait_attribute);
+  //  $r->addWait($wait_attribute);
 
     header('Content-type: text/xml');
     $w = $r->toXML();

@@ -570,7 +570,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         'to' => $field['phone'],
         'from' => $mapping->from_number,
         'answer_url' => $xml,
-        'hangup_uri' => CRM_Utils_System::url('civicrm/plivo/hangup', NULL, TRUE),
+        'hangup_url' => CRM_Utils_System::url('civicrm/plivo/hangup', NULL, TRUE),
       );
       $response = $plivoAPI->make_call($voiceParams);
       if (CRM_Utils_Array::value('request_uuid', $response['response'])) {
@@ -811,6 +811,7 @@ AND    status IN ( 'Scheduled', 'Running', 'Paused' )
         'campaign_id' => $mailing->campaign_id,
         'details' => $details,
       );
+CRM_Core_Error::debug_var('awdawd', $activity);
 
       //check whether activity is already created for this mailing.
       //if yes then create only target contact record.
@@ -855,6 +856,7 @@ AND    record_type_id = $targetRecordID
       }
 
       if (is_a(CRM_Activity_BAO_Activity::create($activity), 'CRM_Core_Error')) {
+CRM_Core_Error::debug_var('adwad', $activity);
         $result = FALSE;
       }
 

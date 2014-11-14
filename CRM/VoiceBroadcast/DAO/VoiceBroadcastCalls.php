@@ -116,7 +116,7 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcastCalls extends CRM_Core_DAO
    *
    * @var string
    */
-  public $from;
+  public $from_number;
   /**
    * Subject of mailing
    *
@@ -134,7 +134,7 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcastCalls extends CRM_Core_DAO
    *
    * @var string
    */
-  public $to;
+  public $to_number;
   /**
    * Subject of mailing
    *
@@ -236,8 +236,8 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcastCalls extends CRM_Core_DAO
           'name' => 'hangup_cause',
           'type' => CRM_Utils_Type::T_STRING,
         ) ,
-        'from' => array(
-          'name' => 'from',
+        'from_number' => array(
+          'name' => 'from_number',
           'type' => CRM_Utils_Type::T_STRING,
         ) ,
         'bill_duration' => array(
@@ -248,8 +248,8 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcastCalls extends CRM_Core_DAO
           'name' => 'bill_rate',
           'type' => CRM_Utils_Type::T_FLOAT,
         ) ,
-        'to' => array(
-          'name' => 'to',
+        'to_number' => array(
+          'name' => 'to_number',
           'type' => CRM_Utils_Type::T_STRING,
         ) ,
         'answer_time' => array(
@@ -303,10 +303,10 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcastCalls extends CRM_Core_DAO
         'total_cost' => 'total_cost',
         'direction' => 'direction',
         'hangup_cause' => 'hangup_cause',
-        'from' => 'from',
+        'from_number' => 'from_number',
         'bill_duration' => 'bill_duration',
         'bill_rate' => 'bill_rate',
-        'to' => 'to',
+        'to_number' => 'to_number',
         'answer_time' => 'answer_time',
         'start_time' => 'start_time',
         'call_uuid' => 'call_uuid',

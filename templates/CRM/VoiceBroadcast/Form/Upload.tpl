@@ -54,6 +54,11 @@
 		<input type="button" id="send" value="Save Voice Recording">
             </td>
         </tr>
+<tr>
+	<td>
+	<span id="voiceRecordFile"></span>
+        </td>
+        </tr>
         <tr class="crm-mailing-upload-form-block-textFile">
             <td class="label">{$form.voiceFile.label}</td>
             <td>{$form.voiceFile.html}<br />
@@ -134,6 +139,7 @@ cj('#stop').click(function(){
 cj('#send').click(function(){
     cj.jRecorder.sendData();
     cj("input[name='voice_rec']").val(uploadPath + '.wav');
+    cj("#voiceRecordFile").text('Successfully Uploaded!');
     });
 
  function callback_finished() {
