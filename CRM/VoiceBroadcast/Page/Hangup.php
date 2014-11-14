@@ -2,6 +2,23 @@
 
 class CRM_VoiceBroadcast_Page_Hangup extends CRM_Core_Page {
   function run() {
+
+    /* $_POST['TotalCost'] = '0.00000'; */
+    /* $_POST['Direction'] = 'outbound'; */
+    /* $_POST['HangupCause'] = 'NO_ANSWER'; */
+    /* $_POST['From'] = '+919870496621'; */
+    /* $_POST['BillDuration'] = '0'; */
+    /* $_POST['BillRate'] = '0.03570'; */
+    /* $_POST['To'] = '919870496621'; */
+    /* $_POST['AnswerTime'] = ''; */
+    /* $_POST['StartTime'] = '2014-11-03 16:07:46'; */
+    /* $_POST['CallUUID'] = 'afa073df-43a7-4a20-acff-86f0ef188187'; */
+    /* $_POST['Duration'] = '0'; */
+    /* $_POST['RequestUUID'] = 'afa073df-43a7-4a20-acff-86f0ef188187'; */
+    /* $_POST['EndTime'] = '2014-11-03 16:09:46'; */
+    /* $_POST['CallStatus'] = 'no-answer'; */
+    /* $_POST['Event'] = 'Hangup'; */
+
     if (CRM_Utils_Array::value('CallUUID', $_POST)) {
       $callParams = $_POST;
       // Retreive the voice broadcast
@@ -33,8 +50,7 @@ class CRM_VoiceBroadcast_Page_Hangup extends CRM_Core_Page {
       $call->call_status = $callParams['CallStatus'];
       $call->event = $callParams['Event'];
       $call->save();
-      //Write activity
-$activityTypeID = CRM_Core_OptionGroup::getValue(
+      $activityTypeID = CRM_Core_OptionGroup::getValue(
           'activity_type',
           'Voice Broadcast',
           'name'
@@ -52,11 +68,11 @@ $activityTypeID = CRM_Core_OptionGroup::getValue(
         $details .= "<p><b>From:</b> ".$callParams['From']." </p><br/><p><b>To:</b> ".$callParams['To']." </p><br/>
           <p><b>Start Time:</b> ".$callParams['StartTime']." </p><br/><p><b>End Time:</b> ".$callParams['EndTime']." </p><br/>";
 
-      $activoity = array(
-        'source_contact_id' => (int)$voice->scheduled_id,
+      $activity = array(
+        'source_contact_id' => $voice->created_id,
         'target_contact_id' => array_unique($targetParams),
         'activity_type_id' => $activityTypeID,
-        'source_record_id' => (int)$voice->id,
+        'source_record_id' => $voice->id,
         'activity_date_time' => $job_date,
         'subject' => 'Voice Broadcast Call from '. $voice->from_name,
         'status_id' => 2,
