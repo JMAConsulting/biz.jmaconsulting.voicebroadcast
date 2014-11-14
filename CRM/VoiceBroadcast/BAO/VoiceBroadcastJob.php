@@ -577,7 +577,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         $logs[$field['id']] = $response['response']['request_uuid'];
         // Get the request UUID and save it for later
         $lookupP = array(
-          'voice_id' => $this->id,
+          'voice_id' => $mailing->id,
           'contact_id' => $mapping->contact_id,
           'from_number' => $mapping->from_number,
           'to_number' => $field['phone'],
@@ -587,6 +587,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
         $lookup = new CRM_VoiceBroadcast_DAO_VoiceBroadcastLookup();
         $lookup->copyValues($lookupP);
         $lookup->save();
+
         $lookup->free();
       }
       
