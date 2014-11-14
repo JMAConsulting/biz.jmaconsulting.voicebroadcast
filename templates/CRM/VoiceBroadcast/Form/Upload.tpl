@@ -151,7 +151,6 @@ cj('#send').click(function(){
    }         
                     
  function callback_started() {
- alert('wad');
   cj('#status').html('Recording is started');
    }
 
