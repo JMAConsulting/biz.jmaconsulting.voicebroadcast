@@ -44,20 +44,16 @@
         <tr class="crm-mailing-upload-form-block-textFile">	
             <td class="label">Record a voice message</td>
             <td>
-		<input type="button" id="record" value="Record">  <br />
+		<input type="button" id="record" value="Record">  
                 <span class="description">{ts}Record a voice message{/ts}</span>
-            </td>
-            <td>
 		<input type="button" id="stop" value="Stop">
-            </td>
-            <td>
-		<input type="button" id="send" value="Save Voice Recording">
-            </td>
+		<input type="button" id="send" value="Save Voice Recording" onclick="return submitOnce();"><span id="voiceRecordFile" style="display:none">Playing back...</span>
+</td>
         </tr>
-<tr>
-	<td>
-	<span id="voiceRecordFile"></span>
-        </td>
+	<tr><td></td>
+            <td>
+	        <b style="padding-left:110px;">OR</b>
+            </td>
         </tr>
         <tr class="crm-mailing-upload-form-block-textFile">
             <td class="label">{$form.voiceFile.label}</td>
@@ -74,6 +70,10 @@
 {literal}
 <script type="text/javascript">
 
+
+function submitOnce() {
+  cj('#send').val('Uploading...');
+}
 // Phone numbers
 var numbers = [];
 
@@ -133,13 +133,17 @@ cj('#record').click(function(){
    });
 
 cj('#stop').click(function(){
-    cj.jRecorder.stop();
+    cj.jRecorder.stop(); 
+    cj('#voiceRecordFile').show();
    });
 
 cj('#send').click(function(){
-    cj.jRecorder.sendData();
+   cj.jRecorder.sendData();
     cj("input[name='voice_rec']").val(uploadPath + '.wav');
-    cj("#voiceRecordFile").text('Successfully Uploaded!');
+    cj('#voiceRecordFile').hide();
+    setTimeout(function(){
+        cj('#send').delay(500).val('Done!');
+    }, 5000); 
     });
 
  function callback_finished() {
@@ -147,6 +151,7 @@ cj('#send').click(function(){
    }         
                     
  function callback_started() {
+ alert('wad');
   cj('#status').html('Recording is started');
    }
 
