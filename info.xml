@@ -1,20 +1,20 @@
 <?xml version="1.0"?>
 <extension key="biz.jmaconsulting.voicebroadcast" type="module">
   <file>voicebroadcast</file>
-  <name>FIXME</name>
-  <description>FIXME</description>
-  <license>AGPL-3.0</license>
+  <name>Voice Broadcast with Plivo Integration</name>
+  <description>Use this module to send voice broadcast messages (aka voice blasts) to groups in CiviCRM.</description>
+  <license>No license - pre-release</license>
   <maintainer>
-    <author>Edsel</author>
-    <email>edsel.lopez@jmaconsulting.biz</email>
+    <author>JMA Consulting</author>
+    <email>info@jmaconsulting.biz</email>
   </maintainer>
-  <releaseDate>2014-08-25</releaseDate>
-  <version>1.0</version>
+  <releaseDate>2015-03-24</releaseDate>
+  <version>0.9</version>
   <develStage>alpha</develStage>
   <compatibility>
     <ver>4.2</ver>
   </compatibility>
-  <comments>This is a new, undeveloped module</comments>
+  <comments>Pre-release version - please do not share</comments>
   <civix>
     <namespace>CRM/Voicebroadcast</namespace>
   </civix>
