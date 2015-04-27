@@ -59,7 +59,7 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
   }
 
   /**
-   * Create a security hash from the job, email and contact ids
+   * Create a security hash from the job, phone and contact ids
    *
    * @param array     The ids to be hashed
    *
@@ -69,10 +69,10 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
    */
   public static function hash($params) {
     $jobId     = $params['job_id'];
-    $emailId   = $params['email_id'];
+    $phoneId   = $params['phone_id'];
     $contactId = $params['contact_id'];
 
-    return substr(sha1("{$jobId}:{$emailId}:{$contactId}:" . time()),
+    return substr(sha1("{$jobId}:{$phoneId}:{$contactId}:" . time()),
       0, 16
     );
   }
@@ -90,7 +90,7 @@ class CRM_VoiceBroadcast_Event_BAO_Queue extends CRM_VoiceBroadcast_Event_DAO_Qu
    */
   public static function &verify($job_id, $queue_id, $hash) {
     $success = NULL;
-    $q = new CRM_Broadcast_Event_BAO_Queue();
+    $q = new CRM_VoiceBroadcast_Event_BAO_Queue();
     if (!empty($job_id) && !empty($queue_id) && !empty($hash)) {
       $q->id     = $queue_id;
       $q->job_id = $job_id;
