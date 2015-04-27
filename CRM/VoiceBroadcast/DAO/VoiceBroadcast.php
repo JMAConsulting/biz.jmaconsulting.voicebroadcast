@@ -428,14 +428,6 @@ class CRM_VoiceBroadcast_DAO_VoiceBroadcast extends CRM_Core_DAO
             'type' => 'CheckBox',
           ) ,
         ) ,
-        'voice_message_file' => array(
-          'name' => 'voice_message_file',
-          'type' => CRM_Utils_Type::T_LONGTEXT,
-          'title' => ts('Voice Message File') ,
-          'html' => array(
-            'type' => 'Text',
-          ) ,
-        ) ,
       );
     }
     return self::$_fields;

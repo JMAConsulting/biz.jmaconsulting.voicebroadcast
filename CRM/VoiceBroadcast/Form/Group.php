@@ -53,9 +53,6 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
    * @access public
    */
   public function preProcess() {
-    if (CRM_Core_BAO_MailSettings::defaultDomain() == "EXAMPLE.ORG") {
-      CRM_Core_Error::fatal(ts('The <a href="%1">default mailbox</a> has not been configured. You will find <a href="%2">more info in our online user and administrator guide.</a>', array(1 => CRM_Utils_System::url('civicrm/admin/mailSettings', 'reset=1'), 2 => "http://book.civicrm.org/user/advanced-configuration/email-system-configuration/")));
-    }
 
     $this->_mailingID = CRM_Utils_Request::retrieve('mid', 'Integer', $this, FALSE, NULL);
 
