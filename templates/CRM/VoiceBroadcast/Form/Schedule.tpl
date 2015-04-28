@@ -26,9 +26,9 @@
 <div class="crm-block crm-form-block crm-mailing-schedule-form-block">
 {include file="CRM/common/WizardHeader.tpl"}
 <div id="help">
-    {ts}You can schedule this mailing to be sent starting at a specific date and time, OR you can request that it be sent as soon as possible by checking &quot;Send Immediately&quot;.{/ts} {help id="sending"}
+    {ts}You can schedule this voice broadcast to be sent starting at a specific date and time, OR you can request that it be sent as soon as possible by checking &quot;Send Immediately&quot;.{/ts} {help id="sending"}
 </div>
-{include file="CRM/Mailing/Form/Count.tpl"}
+{include file="CRM/VoiceBroadcast/Form/Count.tpl"}
 
 <table class="form-layout">
   <tbody>
@@ -43,31 +43,13 @@
     <tr class="crm-mailing-schedule-form-block-start_date">
         <td class="label">{$form.start_date.label}</td>
         <td>{include file="CRM/common/jcalendar.tpl" elementName=start_date}
-            <div class="description">{ts}Set a date and time when you want CiviMail to start sending this mailing.{/ts}</div>
+            <div class="description">{ts}Set a date and time when you want to start sending this voice broadcast.{/ts}</div>
         </td>
     </tr>
   </tbody>
 </table>
 <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl"}</div>
 
-{if $preview}
-<div class="crm-accordion-wrapper crm-plain_text_email-accordion collapsed">
-    <div class="crm-accordion-header">
-        {ts}Preview Mailing{/ts}
-    </div><!-- /.crm-accordion-header -->
-    <div class="crm-accordion-body">
-        <table class="form-layout">
-          <tr class="crm-mailing-test-form-block-subject"><td class="label">{ts}Subject:{/ts}</td><td>{$preview.subject}</td></tr>
-    {if $preview.attachment}
-          <tr class="crm-mailing-test-form-block-attachment"><td class="label">{ts}Attachment(s):{/ts}</td><td>{$preview.attachment}</td></tr>
-    {/if}
-          {if $preview.viewURL}
-    <tr><td class="label">{if $preview.type eq 'html'}{ts}Mailing HTML:{/ts}{else}{ts}Mailing Text:{/ts}{/if}</td><td><iframe height="300" src="{$preview.viewURL}" width="80%"><a href="{$preview.viewURL}" onclick="window.open(this.href); return false;">{ts}Mailing Text:{/ts}</a></iframe></td></tr>
-          {/if}
-        </table>
-    </div><!-- /.crm-accordion-body -->
-</div><!-- /.crm-accordion-wrapper -->
-{/if}
 </div>
 
 <script type="text/javascript">
