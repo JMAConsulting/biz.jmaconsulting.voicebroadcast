@@ -270,11 +270,17 @@ SELECT @fileTypeId := id FROM `civicrm_option_group` WHERE `name` = 'file_type';
 
 SELECT @actTypeId := id FROM `civicrm_option_group` WHERE `name` = 'activity_type';
 
+SELECT @safeId := id FROM `civicrm_option_group` WHERE `name` = 'safe_file_extension';
+
 SELECT @maxValue := MAX( CAST( `value` AS UNSIGNED ) ) + 1 FROM  `civicrm_option_value` WHERE `option_group_id` = @actTypeId;
+
+SELECT @maxSafeValue := MAX( CAST( `value` AS UNSIGNED ) ) + 1 FROM  `civicrm_option_value` WHERE `option_group_id` = @safeId;
 
 INSERT INTO `civicrm_option_value` (`option_group_id`, `label`, `value`, `name`, `grouping`, `filter`, `is_default`, `weight`, `description`, `is_optgroup`, `is_reserved`, `is_active`, `component_id`, `domain_id`, `visibility_id`) VALUES
 (@fileTypeId, 'Voice File', '1', 'Voice File', NULL, 0, 0, 1, NULL, 0, 0, 1, NULL, NULL, NULL),
 (@fileTypeId, 'XML File', '2', 'XML File', NULL, 0, 0, 2, NULL, 0, 0, 1, NULL, NULL, NULL),
-(@actTypeId, 'Voice Broadcast', @maxValue, 'Voice Broadcast', NULL, 0, 0, @maxValue, NULL, 0, 0, 1, NULL, NULL, NULL);
+(@actTypeId, 'Voice Broadcast', @maxValue, 'Voice Broadcast', NULL, 0, 0, @maxValue, NULL, 0, 0, 1, NULL, NULL, NULL),
+(@safeId, 'wav', @maxSafeValue, 'wav', NULL, 0, 0, @maxSafeValue, NULL, 0, 0, 1, NULL, NULL, NULL),
+(@safeId, 'mp3', @maxSafeValue, 'mp3', NULL, 0, 0, @maxSafeValue + 1, NULL, 0, 0, 1, NULL, NULL, NULL);
 
 
