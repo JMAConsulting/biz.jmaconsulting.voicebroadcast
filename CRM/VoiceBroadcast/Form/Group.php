@@ -56,32 +56,9 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
 
     $this->_mailingID = CRM_Utils_Request::retrieve('mid', 'Integer', $this, FALSE, NULL);
 
-    // when user come from search context.
-    $this->_searchBasedMailing = CRM_Contact_Form_Search::isSearchContext($this->get('context'));
-    if ($this->_searchBasedMailing) {
-      $searchParams = $this->controller->exportValues();
-      // number of records that were selected - All or Few.
-      $this->_resultSelectOption = $searchParams['radio_ts'];
-      if (CRM_Utils_Array::value('task', $searchParams) == 20) {
-        parent::preProcess();
-      }
-    }
-
     $session = CRM_Core_Session::singleton();
-    if ($this->_searchBasedMailing) {
-      $config = CRM_Core_Config::singleton();
-      $path = CRM_Utils_Array::value($config->userFrameworkURLVar, $_GET);
-      $qfKey = CRM_Utils_Array::value('qfKey', $_GET);
-      if ($qfKey) {
-        $session->pushUserContext(CRM_Utils_System::url($path, "qfKey=$qfKey"));
-      }
-      else {
-        $session->pushUserContext(CRM_Utils_System::url('civicrm/mailing', 'reset=1'));
-      }
-    }
-    elseif (strpos($session->readUserContext(), 'civicrm/mailing') === FALSE) {
-      // use previous context unless mailing is not schedule, CRM-4290
-      $session->pushUserContext(CRM_Utils_System::url('civicrm/mailing', 'reset=1'));
+    if (strpos($session->readUserContext(), 'civicrm/voicebroadcast') === FALSE) {
+      $session->pushUserContext(CRM_Utils_System::url('civicrm/voicebroadcast', 'reset=1'));
     }
   }
 
@@ -97,15 +74,12 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
     $continue = CRM_Utils_Request::retrieve('continue', 'String', $this, FALSE, NULL);
 
     $defaults = array();
-    $defaults['dedupe_email'] = CRM_Core_BAO_Setting::getItem(CRM_Core_BAO_Setting::MAILING_PREFERENCES_NAME,
-      'dedupe_email_default', NULL, FALSE
-    );
 
     if ($this->_mailingID) {
       // check that the user has permission to access mailing id
-      CRM_Mailing_BAO_Mailing::checkPermission($this->_mailingID);
+      CRM_VoiceBroadcast_BAO_VoiceBroadcast::checkPermission($this->_mailingID);
 
-      $mailing = new CRM_Mailing_DAO_Mailing();
+      $mailing = new CRM_VoiceBroadcast_DAO_VoiceBroadcast();
       $mailing->id = $this->_mailingID;
       $mailing->addSelect('name', 'campaign_id');
       $mailing->find(TRUE);
@@ -120,15 +94,14 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
       }
 
       $defaults['campaign_id'] = $mailing->campaign_id;
-      $defaults['dedupe_email'] = $mailing->dedupe_email;
 
-      $dao = new CRM_Mailing_DAO_MailingGroup();
+      $dao = new CRM_VoiceBroadcast_DAO_VoiceBroadcastGroup();
 
       $mailingGroups = array(
         'civicrm_group' => array( ),
         'civicrm_voicebroadcast' => array( )
       );
-      $dao->mailing_id = $this->_mailingID;
+      $dao->voice_id = $this->_mailingID;
       $dao->find();
       while ($dao->fetch()) {
         // account for multi-lingual
@@ -152,17 +125,6 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
     //when the context is search hide the mailing recipients.
     $showHide = new CRM_Core_ShowHideBlocks();
     $showGroupSelector = TRUE;
-    if ($this->_searchBasedMailing) {
-      $showGroupSelector = FALSE;
-      $formElements      = array('includeGroups', 'excludeGroups', 'includeMailings', 'excludeMailings');
-      $formValues        = $this->controller->exportValues($this->_name);
-      foreach ($formElements as $element) {
-        if (!empty($formValues[$element])) {
-          $showGroupSelector = TRUE;
-          break;
-        }
-      }
-    }
 
     if ($showGroupSelector) {
       $showHide->addShow("id-additional");
@@ -187,9 +149,6 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
 
     //get the context
     $context = $this->get('context');
-    if ($this->_searchBasedMailing) {
-      $context = 'search';
-    }
     $this->assign('context', $context);
 
     $this->add('text', 'name', ts('Name Your VoiceBroadcast'),
@@ -203,7 +162,6 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
     //CRM-7362 --add campaigns.
     if ($this->_mailingID) {
       $campaignId = CRM_Core_DAO::getFieldValue('CRM_VoiceBroadcast_DAO_VoiceBroadcast', $this->_mailingID, 'campaign_id');
-      $hiddenMailingGroup = CRM_VoiceBroadcast_BAO_VoiceBroadcast::hiddenMailingGroup($this->_mailingID);
     }
     CRM_Campaign_BAO_Campaign::addCampaign($this, $campaignId);
 
@@ -237,7 +195,7 @@ class CRM_VoiceBroadcast_Form_Group extends CRM_Contact_Form_Task {
     $this->add('select', 'includeGroups',
       ts('Include Group(s)'),
       $groups,
-      !$this->_searchBasedMailing,
+      FALSE,
       $select2style
     );
 

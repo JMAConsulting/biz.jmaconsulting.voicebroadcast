@@ -252,7 +252,7 @@ ORDER BY   e.is_primary DESC
    * @return string
    */
   public function getTitle() {
-    return ts('Test');
+    return ts('Test Robo Call');
   }
 
   public function postProcess() {

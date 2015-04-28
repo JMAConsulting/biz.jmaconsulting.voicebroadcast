@@ -34,7 +34,7 @@
  */
 
 /**
- * Class CRM_Mailing_BAO_Mailing
+ * Class CRM_VoiceBroadcast_BAO_VoiceBroadcast
  */
 class CRM_VoiceBroadcast_BAO_VoiceBroadcast extends CRM_VoiceBroadcast_DAO_VoiceBroadcast {
   /**
