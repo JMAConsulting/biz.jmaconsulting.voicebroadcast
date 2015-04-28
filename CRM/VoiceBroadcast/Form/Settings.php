@@ -89,10 +89,6 @@ class CRM_VoiceBroadcast_Form_Settings extends CRM_Core_Form {
       $dao = new CRM_VoiceBroadcast_DAO_VoiceBroadcast();
       $dao->id = $mailingID;
       $dao->find(TRUE);
-      // override_verp must be flipped, as in 3.2 we reverted
-      // its meaning to ‘should CiviMail manage replies?’ – i.e.,
-      // ‘should it *not* override Reply-To: with VERP-ed address?’
-      $dao->override_verp = !$dao->override_verp;
       $dao->storeValues($dao, $defaults);
       $defaults['visibility'] = $dao->visibility;
     }

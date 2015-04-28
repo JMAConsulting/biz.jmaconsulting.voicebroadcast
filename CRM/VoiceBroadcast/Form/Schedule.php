@@ -89,7 +89,7 @@ class CRM_VoiceBroadcast_Form_Schedule extends CRM_Core_Form {
     $this->addFormRule(array('CRM_VoiceBroadcast_Form_Schedule', 'formRule'), $this);
 
     if ($this->_scheduleFormOnly) {
-      $title = ts('Schedule Voice Broadcast') . ' - ' . CRM_Core_DAO::getFieldValue('CRM_Mailing_DAO_Mailing',
+      $title = ts('Schedule Voice Broadcast') . ' - ' . CRM_Core_DAO::getFieldValue('CRM_VoiceBroadcast_DAO_VoiceBroadcast',
         $this->_mailingID,
         'name'
       );
