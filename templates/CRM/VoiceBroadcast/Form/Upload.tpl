@@ -27,7 +27,7 @@
 {include file="CRM/common/WizardHeader.tpl"}
 
 <div id="help">
-    {ts}You can either <strong>upload</strong> the mailing content from your computer OR <strong>compose</strong> the content on this screen.{/ts} {help id="content-intro"}
+    {ts}You can either <strong>upload</strong> the voice file from your computer OR <strong>record</strong> the content on this screen.{/ts} {help id="content-intro"}
 </div>
 
 {include file="CRM/Mailing/Form/Count.tpl"}
@@ -45,7 +45,7 @@
             <td class="label">Record a voice message</td>
             <td>
 		<input type="button" id="record" value="Record">  
-                <span class="description">{ts}Record a voice message{/ts}</span>
+		<span id="status"></span>
 		<input type="button" id="stop" value="Stop">
 		<input type="button" id="send" value="Save Voice Recording" onclick="return submitOnce();"><span id="voiceRecordFile" style="display:none">Playing back...</span>
 </td>
@@ -58,7 +58,7 @@
         <tr class="crm-mailing-upload-form-block-textFile">
             <td class="label">{$form.voiceFile.label}</td>
             <td>{$form.voiceFile.html}<br />
-                <span class="description">{ts}Browse to the <strong>Voice</strong> message file you have prepared for this mailing.{/ts}</span>
+                <span class="description">{ts}Browse to the <strong>Voice</strong> message file you have prepared for this mailing. (Only mp3 and wav files are allowed){/ts}</span>
             </td>
         </tr>
     </table>
@@ -116,7 +116,7 @@ cj.jRecorder(
         host : recName,
         
         callback_started_recording:     function(){ callback_started(); },
-        callback_stopped_recording:     function(){callback_stopped(); },
+        callback_stopped_recording:     function(){ callback_stopped(); },
         callback_activityLevel:          function(level){callback_activityLevel(level); },
         callback_activityTime:     function(time){callback_activityTime(time); },
         
@@ -128,13 +128,15 @@ cj.jRecorder(
      }
    );
 
-cj('#record').click(function(){         
-    cj.jRecorder.record(30); //record up to 30 sec and stops automatically              
+cj('#record').click(function(){       
+    cj.jRecorder.record(30); //record up to 30 sec and stops automatically    
+    cj(this).attr('value', 'Recording...'); 
    });
 
 cj('#stop').click(function(){
     cj.jRecorder.stop(); 
-    cj('#voiceRecordFile').show();
+    cj('#voiceRecordFile').show();    
+    cj('#record').attr('value', 'Record'); 
    });
 
 cj('#send').click(function(){
@@ -147,11 +149,11 @@ cj('#send').click(function(){
     });
 
  function callback_finished() {
-  cj('#status').html('Recording is finished');
+  cj('#status').text('Recording is finished');
    }         
                     
  function callback_started() {
-  cj('#status').html('Recording is started');
+  cj('#status').text('Recording is started');
    }
 
 function callback_activityTime(time) {
