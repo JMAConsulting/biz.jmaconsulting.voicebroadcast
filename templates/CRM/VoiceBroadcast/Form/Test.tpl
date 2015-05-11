@@ -97,8 +97,3 @@
 <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl"}</div>
     
 </div>
-{literal}
-<script type="text/javascript">
-
-</script>
-{/literal}
