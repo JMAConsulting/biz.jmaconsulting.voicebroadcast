@@ -77,7 +77,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $session->getVars($options,
       "CRM_VoiceBroadcast_Controller_Send_{$this->controller->_key}"
     );
-    $this->addEntityRef('contact_id', ts('Contact'), array('create' => TRUE, 'api' => array('extra' => array('email'))), TRUE);
+    $this->addEntityRef('contact_id', ts('From Contact'), array('create' => TRUE, 'api' => array('extra' => array('email'))), TRUE);
     
     $this->add('select', 'phone_number',
       ts('Phone Number'), array(
