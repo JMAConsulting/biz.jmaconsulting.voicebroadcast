@@ -62,9 +62,7 @@ class CRM_VoiceBroadcast_Form_Test extends CRM_Core_Form {
   public function buildQuickForm() {
     $config  = CRM_Core_Config::singleton();
     CRM_Core_Resources::singleton()->addScriptFile('biz.jmaconsulting.voicebroadcast', 'packages/js/jquery.jplayer.min.js', 10, 'html-header');
-    CRM_Core_Resources::singleton()->addScriptFile('biz.jmaconsulting.voicebroadcast', 'packages/js/player.js', 10, 'html-header');
     CRM_Core_Resources::singleton()->addStyleFile('biz.jmaconsulting.voicebroadcast', 'packages/skin/blue.monday/css/jplayer.blue.monday.css', 10, 'html-header');
-    $swfURL = $config->extensionsURL . 'biz.jmaconsulting.voicebroadcast/packages/js/';
     $session = CRM_Core_Session::singleton();
     $this->add('text', 'test_phone', ts('Send to this phone number'));
     $qfKey = $this->get('qfKey');
@@ -101,6 +99,11 @@ class CRM_VoiceBroadcast_Form_Test extends CRM_Core_Form {
     $this->addButtons($buttons);
 
     $voiceID = $this->get('voice_id');
+    // Get voice file
+    $voiceFile = CRM_Core_BAO_File::getEntityFile('civicrm_voicebroadcast', $voiceID);
+    $voiceFile = reset($voiceFile);
+    $this->assign('voiceFile', htmlspecialchars_decode($voiceFile['url']));
+    $this->assign('voiceName', CRM_Core_DAO::getFieldValue('CRM_VoiceBroadcast_DAO_VoiceBroadcast', $voiceID, 'name'));
 
     $this->addFormRule(array('CRM_VoiceBroadcast_Form_Test', 'testMail'), $this);
     $options = array();

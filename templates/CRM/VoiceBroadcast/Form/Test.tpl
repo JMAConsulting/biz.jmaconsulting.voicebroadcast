@@ -97,3 +97,30 @@
 <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl"}</div>
     
 </div>
+{literal}
+<script type="text/javascript">
+    cj(document).ready(function(){
+      var voice = '{/literal}{$voiceFile}{literal}';
+      var voicename = '{/literal}{$voiceName}{literal}';
+
+      cj("#jquery_jplayer_1").jPlayer({
+        ready: function () {
+          cj(this).jPlayer("setMedia", {
+            title: voicename,
+            wav: voice,
+            oga: voice
+          });
+        },
+        cssSelectorAncestor: "#jp_container_1",
+        swfPath: "/js",
+        supplied: "wav, oga",
+        useStateClassSkin: true,
+        autoBlur: false,
+        smoothPlayBar: true,
+        keyEnabled: true,
+        remainingDuration: true,
+        toggleDuration: true
+      });
+    });
+  </script>
+{/literal}
