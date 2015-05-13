@@ -55,6 +55,44 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
    * @return void
    */
   function setDefaultValues() {
+
+    $voiceID = $this->get('voice_id');
+    // Get voice file
+    $voiceFile = CRM_Core_BAO_File::getEntityFile('civicrm_voicebroadcast', $voiceID);
+    if (!empty($voiceFile)) {
+      $voiceFile = reset($voiceFile);
+      $this->assign('voice', reset($voiceFile));
+      $deleteExtra = ts('Are you sure you want to delete the voice recording?');
+      $deleteURL = array(
+                         CRM_Core_Action::DELETE =>
+                         array(
+                               'name' => ts('Delete Voice Recording'),
+                               'url' => 'civicrm/file/delete',
+                               'qs' => 'entityTable=%%table%%&fileID=%%id%%&entityID=%%eid%%&_sgn=%%sgn%%',
+                               'extra' =>
+                               'onclick = "if (confirm( \'' . $deleteExtra . '\' ) ) this.href+=\'&amp;confirmed=1\'; else return false;"',
+                               ),
+                         );
+      $params['entityTable'] = 'civicrm_voicebroadcast';
+      $params['entityID'] = $voiceID;
+      $params['fileID'] = $voiceFile['fileID'];
+      $signer = new CRM_Utils_Signer(CRM_Core_Key::privateKey(), CRM_Core_BAO_File::$_signableFields);
+      $deleteURL = CRM_Core_Action::formLink($deleteURL,
+                                                            CRM_Core_Action::DELETE,
+                                                            array(
+                                                                  'id' => $voiceFile['fileID'],
+                                                                  'eid' => $voiceID,
+                                                                  'table' => 'civicrm_voicebroadcast',
+                                                                  'sgn' => $signer->sign($params),
+                                                                  ),
+                                                            ts('more'),
+                                                            FALSE,
+                                                            'file.manage.delete',
+                                                            'File',
+                                                            $voiceFile['fileID']
+                                                            );
+      $this->assign('deleteLink', $deleteURL);
+    }
   }
 
   /**

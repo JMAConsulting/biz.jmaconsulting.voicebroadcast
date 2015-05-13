@@ -41,6 +41,15 @@
 
   <fieldset id="upload_id"><legend>{ts}Upload Content{/ts}</legend>
     <table class="form-layout-compressed">
+    	<tr>
+          <td>
+              <div class="crm-attachment-wrapper crm-entity">
+              {if $deleteURL}
+	        {$deleteURL}
+              {/if}
+              </div>
+          </td>
+        </tr>
         <tr class="crm-mailing-upload-form-block-textFile">	
             <td class="label">Record a voice message</td>
             <td>
@@ -62,7 +71,8 @@
             </td>
         </tr>
     </table>
-  </fieldset>
+  </fieldset> 
+
 
   <div class="crm-submit-buttons">{include file="CRM/common/formButtons.tpl"}</div>
 </div><!-- / .crm-form-block -->
