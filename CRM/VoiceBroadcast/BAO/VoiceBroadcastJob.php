@@ -812,7 +812,6 @@ AND    status IN ( 'Scheduled', 'Running', 'Paused' )
         'campaign_id' => $mailing->campaign_id,
         'details' => $details,
       );
-CRM_Core_Error::debug_var('awdawd', $activity);
 
       //check whether activity is already created for this mailing.
       //if yes then create only target contact record.
