@@ -85,6 +85,15 @@ function submitOnce() {
   cj('#send').val('Uploading...');
 }
 // Phone numbers
+
+var phno = '{/literal}{$phone_number_default}{literal}';
+
+if (phno) {
+ option = '<option value="'+ phno + '" selected="selected">' + phno + '</option>';
+ cj('#phone_number').append(option);
+}
+
+
 var numbers = [];
 
 function fn() {
