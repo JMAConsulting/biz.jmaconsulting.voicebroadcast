@@ -94,7 +94,12 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
       $this->assign('deleteLink', $deleteURL);
     }
     if ($voiceID) {
-      $fromNumber = CRM_Core_DAO::getFieldValue('CRM_VoiceBroadcast_DAO_VoiceBroadcast', $voiceID, 'from_number');
+      if (!empty($this->_submitValues['phone_number'])) {
+        $fromNumber = $this->_submitValues['phone_number'];
+      }
+      else {
+        $fromNumber = CRM_Core_DAO::getFieldValue('CRM_VoiceBroadcast_DAO_VoiceBroadcast', $voiceID, 'from_number');
+      }
       $this->assign('phone_number_default', $fromNumber);
     }
   }
