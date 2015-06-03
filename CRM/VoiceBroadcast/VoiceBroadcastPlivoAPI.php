@@ -49,7 +49,16 @@ interface CRM_VoiceBroadcast_VoiceBroadcastPlivoAPI {
    * @return array  the response from the API
    *
    */
-  function toXML($params);
+  public static function toXML($attachments, $id);
+
+  /**
+   * creates instance of Plivo object
+   *
+   *
+   * @return object the Plivo Object
+   *
+   */
+  public static function createPlivo();
 
 
   /**
@@ -60,7 +69,7 @@ interface CRM_VoiceBroadcast_VoiceBroadcastPlivoAPI {
    * @return array  the response from the API
    *
    */
-  function makeCall($params);
+  public static function makeCall($plivoAPI, $mailing, $field, $mapping, $xml);
 
 }
 

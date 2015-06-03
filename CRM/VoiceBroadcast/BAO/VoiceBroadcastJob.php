@@ -487,7 +487,7 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     // get and format attachments
     $attachments = CRM_Core_BAO_File::getEntityFile('civicrm_voicebroadcast', $mailing->id);
     // Create XML file to be sent to Plivo
-    $xml = CRM_VoiceBroadcast_BAO_VoiceBroadcast::createXML($attachments, $mailing->id);
+    $xml = CRM_VoiceBroadcast_BAO_VoiceBroadcastPlivo::toXML($attachments, $mailing->id);
 
     // CRM-12376
     // This handles the edge case scenario where all the mails
@@ -552,84 +552,45 @@ VALUES (%1, %2, %3, %4, %5, %6, %7)
     }
     $params           = $targetParams = $deliveredParams = array();
     $count            = 0;
-    require_once 'packages/plivo.php';
-    $plivo = new CRM_VoiceBroadcast_DAO_VoiceBroadcastPlivo();
-    $plivo->find(TRUE);
-    $plivo->fetch();
-    $authID = $plivo->auth_id;
-    $authToken = $plivo->auth_token;
-
-    $plivoAPI = new RestAPI($authID, $authToken);
+    
+    $plivoAPI = CRM_VoiceBroadcast_BAO_VoiceBroadcastPlivo::createPlivo();
 
     $config = CRM_Core_Config::singleton();
     foreach ($fields as $key => $field) {
       $contactID = $field['contact_id'];
-
       /* Send the voice broadcast */
-      $voiceParams = array(
-        'to' => $field['phone'],
-        'from' => $mapping->from_number,
-        'answer_url' => $xml,
-        'hangup_url' => CRM_Utils_System::url('civicrm/plivo/hangup', NULL, TRUE),
+      $response = CRM_VoiceBroadcast_BAO_VoiceBroadcastPlivo::makeCall($plivoAPI, $mailing, $field, $mapping, $xml);
+    }
+    
+    /* Register the delivery event */
+    $deliveredParams[] = $field['id'];
+    $targetParams[] = $field['contact_id'];
+    
+    $count++;
+    if ($count % CRM_Core_DAO::BULK_MAIL_INSERT_COUNT == 0) {
+      $this->writeToDB(
+        $deliveredParams,
+        $targetParams,
+        $mailing,
+        $job_date
       );
-      $response = $plivoAPI->make_call($voiceParams);
-      if (CRM_Utils_Array::value('request_uuid', $response['response'])) {
-        $logs[$field['id']] = $response['response']['request_uuid'];
-        // Get the request UUID and save it for later
-        $lookupP = array(
-          'voice_id' => $mailing->id,
-          'contact_id' => $mapping->contact_id,
-          'from_number' => $mapping->from_number,
-          'to_number' => $field['phone'],
-          'to_contact' => $field['contact_id'],
-          'request_uuid' => $response['response']['request_uuid'],
-        );
-        $lookup = new CRM_VoiceBroadcast_DAO_VoiceBroadcastLookup();
-        $lookup->copyValues($lookupP);
-        $lookup->save();
-
-        $lookup->free();
-      }
+      $count = 0;
+ 
+      $status = CRM_Core_DAO::getFieldValue(
+        'CRM_VoiceBroadcast_DAO_VoiceBroadcastJob',
+        $this->id,
+        'status',
+        'id',
+        TRUE
+      );
       
-
-      /* Register the delivery event */
-      $deliveredParams[] = $field['id'];
-      $targetParams[] = $field['contact_id'];
-
-      $count++;
-      if ($count % CRM_Core_DAO::BULK_MAIL_INSERT_COUNT == 0) {
-        $this->writeToDB(
-          $deliveredParams,
-          $targetParams,
-          $mailing,
-          $job_date
-        );
-        $count = 0;
-
-        // hack to stop mailing job at run time, CRM-4246.
-        // to avoid making too many DB calls for this rare case
-        // lets do it when we snapshot
-        $status = CRM_Core_DAO::getFieldValue(
-                                              'CRM_VoiceBroadcast_DAO_VoiceBroadcastJob',
-                                              $this->id,
-                                              'status',
-                                              'id',
-                                              TRUE
-                                              );
-
-        if ($status != 'Running') {
-          return FALSE;
-        }
-      }
-
-      unset($result);
-
-      // If we have enabled the Throttle option, this is the time to enforce it.
-      if (isset($config->mailThrottleTime) && $config->mailThrottleTime > 0) {
-        usleep((int ) $config->mailThrottleTime);
+      if ($status != 'Running') {
+        return FALSE;
       }
     }
-
+    
+    unset($result);
+  
     $result = $this->writeToDB(
       $deliveredParams,
       $targetParams,
@@ -856,7 +817,6 @@ AND    record_type_id = $targetRecordID
       }
 
       if (is_a(CRM_Activity_BAO_Activity::create($activity), 'CRM_Core_Error')) {
-CRM_Core_Error::debug_var('adwad', $activity);
         $result = FALSE;
       }
 
