@@ -43,4 +43,11 @@
     <access_callback>1</access_callback>
     <is_public>true</is_public>
   </item>
+  <item>
+    <path>civicrm/voice/delete</path>
+    <page_callback>CRM_VoiceBroadcast_BAO_VoiceBroadcast::deleteVoiceFile</page_callback>
+    <title>Delete File</title>
+    <access_callback>1</access_callback>
+    <is_public>true</is_public>
+  </item>
 </menu>

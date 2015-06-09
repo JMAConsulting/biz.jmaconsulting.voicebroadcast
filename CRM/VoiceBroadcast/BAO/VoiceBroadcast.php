@@ -1368,4 +1368,14 @@ ORDER BY civicrm_mailing.name";
     return civicrm_api('MailingContact', 'getcount', $params);
   }
 
+
+  static public function deleteVoiceFile() {
+    $entityTable = 'civicrm_voicebroadcast';
+    $entityID = CRM_Utils_Request::retrieve('entityID', 'Positive', CRM_Core_DAO::$_nullObject, TRUE);
+    $fileID = CRM_Utils_Request::retrieve('fileID', 'Positive', CRM_Core_DAO::$_nullObject, TRUE);
+
+    CRM_Core_BAO_File::deleteEntityFile($entityTable, $entityID, NULL, $fileID);
+    return TRUE;
+  }
+
 }

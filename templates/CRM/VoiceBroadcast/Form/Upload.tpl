@@ -23,6 +23,19 @@
  | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
  +--------------------------------------------------------------------+
 *}
+
+<style>
+
+input#delete    {ldelim}
+  background:url({$deleteIcon}) !important;
+  background-repeat: no-repeat;
+  height:10px !important;
+  border: 0 !important;
+{rdelim}
+
+</style>
+
+
 <div class="crm-block crm-form-block crm-mailing-upload-form-block">
 {include file="CRM/common/WizardHeader.tpl"}
 
@@ -51,6 +64,14 @@
           </td>
         </tr>
         <tr class="crm-mailing-upload-form-block-textFile">	
+	{if $deleteLink}
+	<tr>
+          <td class="label">Uploaded Voice Recording</td>
+	  <td>
+	    {$viewLink}   <input type="button" id="delete" title="Delete Voice Recording">
+          </td>
+        </tr>
+	{/if}
             <td class="label">Record a voice message</td>
             <td>
 		<input type="button" id="record" value="Record">  
@@ -79,6 +100,17 @@
 
 {literal}
 <script type="text/javascript">
+
+
+var deleteLink = '{/literal}{$deleteLink}{literal}';
+
+cj("#delete").click(function(){
+    cj.ajax({
+      url: deleteLink, 
+      success: function(result){
+        CRM.alert(ts('Voice file has been deleted!'));
+    }});
+});
 
 
 function submitOnce() {
