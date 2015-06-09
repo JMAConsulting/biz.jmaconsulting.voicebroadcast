@@ -61,37 +61,10 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $voiceFile = CRM_Core_BAO_File::getEntityFile('civicrm_voicebroadcast', $voiceID);
     if (!empty($voiceFile)) {
       $voiceFile = reset($voiceFile);
-      $this->assign('voice', reset($voiceFile));
-      $deleteExtra = ts('Are you sure you want to delete the voice recording?');
-      $deleteURL = array(
-                         CRM_Core_Action::DELETE =>
-                         array(
-                               'name' => ts('Delete Voice Recording'),
-                               'url' => 'civicrm/file/delete',
-                               'qs' => 'entityTable=%%table%%&fileID=%%id%%&entityID=%%eid%%&_sgn=%%sgn%%',
-                               'extra' =>
-                               'onclick = "if (confirm( \'' . $deleteExtra . '\' ) ) this.href+=\'&amp;confirmed=1\'; else return false;"',
-                               ),
-                         );
-      $params['entityTable'] = 'civicrm_voicebroadcast';
-      $params['entityID'] = $voiceID;
-      $params['fileID'] = $voiceFile['fileID'];
-      $signer = new CRM_Utils_Signer(CRM_Core_Key::privateKey(), CRM_Core_BAO_File::$_signableFields);
-      $deleteURL = CRM_Core_Action::formLink($deleteURL,
-                                                            CRM_Core_Action::DELETE,
-                                                            array(
-                                                                  'id' => $voiceFile['fileID'],
-                                                                  'eid' => $voiceID,
-                                                                  'table' => 'civicrm_voicebroadcast',
-                                                                  'sgn' => $signer->sign($params),
-                                                                  ),
-                                                            ts('more'),
-                                                            FALSE,
-                                                            'file.manage.delete',
-                                                            'File',
-                                                            $voiceFile['fileID']
-                                                            );
-      $this->assign('deleteLink', $deleteURL);
+      $fileID = $voiceFile['fileID'];
+      $link = CRM_Utils_System::url("civicrm/voice/delete", "fileID=$fileID&entityID=$voiceID", TRUE, NULL, FALSE, TRUE);
+      $this->assign('viewLink', $voiceFile['href']);
+      $this->assign('deleteLink', $link);
     }
     if ($voiceID) {
       if (!empty($this->_submitValues['phone_number'])) {
@@ -120,6 +93,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $recName = CRM_Utils_System::url('civicrm/voice/addrecording', "filename={$recName}", TRUE, NULL, TRUE, TRUE, FALSE);
     CRM_Core_Resources::singleton()->addScriptFile('biz.jmaconsulting.voicebroadcast', 'packages/jRecorder.js', 10, 'html-header');
     $swfURL = $config->extensionsURL . 'biz.jmaconsulting.voicebroadcast/packages/jRecorder.swf';
+    $deleteIcon = $config->extensionsURL . 'biz.jmaconsulting.voicebroadcast/packages/skin/trash.png';
 
     $session->getVars($options,
       "CRM_VoiceBroadcast_Controller_Send_{$this->controller->_key}"
@@ -167,6 +141,7 @@ class CRM_VoiceBroadcast_Form_Upload extends CRM_Core_Form {
     $this->assign('recName', $recName);
     $this->assign('uploadPath', $uploadPath);
     $this->assign('swfURL', $swfURL);
+    $this->assign('deleteIcon', $deleteIcon);
   }
 
 
